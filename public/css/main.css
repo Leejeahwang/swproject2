@@ -1,0 +1,100 @@
+/* public/css/main.css */
+
+/* Gmarket 폰트 불러오기 (예시 CSS에서 가져옴) */
+@font-face {
+    font-family: 'GmarketSansMedium';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 기본 설정 (예시 CSS에서 가져옴) */
+body {
+  font-family: 'GmarketSansMedium', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f6f9; /* 배경색 */
+  color: #333;
+  
+  /* 콘텐츠를 화면 중앙에 정렬하기 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* 모든 콘텐츠를 감쌀 흰색 박스 */
+.container {
+    background-color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 350px;
+}
+
+/* 제목 스타일 (h1, h2) */
+h1, h2 {
+  color: #2196f3; /* 메인 색상 */
+  margin-top: 0;
+  margin-bottom: 25px;
+}
+
+/* 폼(form) 내부 요소들 */
+form div {
+  margin-bottom: 15px;
+  text-align: left; /* 폼 내부는 왼쪽 정렬 */
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #555;
+}
+
+/* 입력창 (input) */
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box; /* padding을 포함한 100% */
+}
+
+/* 버튼 (button) */
+button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-family: 'GmarketSansMedium', sans-serif;
+  background-color: #2196f3; /* 메인 색상 */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #6fb7f2; /* 마우스 올렸을 때 색상 */
+}
+
+/* 하단 안내 문구 (p) */
+p {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 링크 (a) */
+a {
+  color: #2196f3; /* 메인 색상 */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

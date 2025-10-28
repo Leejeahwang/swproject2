@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>메인페이지</title>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <h1>렌탈 서비스</h1>
+
+        <% if (user) { %>
+            <p><b><%= user.username %></b>님, 안녕하세요!</p>
+            <a href="/logout">로그아웃</a>
+        <% } else { %>
+            <p>로그인이 필요합니다.</p>
+            <a href="/login">로그인</a> |
+            <a href="/register">회원가입</a>
+        <% } %>
+    </div>
+</body>
+</html>

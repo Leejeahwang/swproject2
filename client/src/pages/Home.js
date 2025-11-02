@@ -1,0 +1,123 @@
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import ProductCard from '../components/ProductCard';
+import './Home.css';
+
+const CATEGORIES = [
+  '전체', '전자기기', '생활가전', '스포츠/레저', '캠핑용품', 
+  '공구', '육아용품', '책/교육', '의류/패션', '기타'
+];
+
+const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('전체');
+  const [sortBy, setSortBy] = useState('latest');
+
+  useEffect(() => {
+    loadProducts();
+  }, [category, sortBy]);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      
+      if (category !== '전체') params.category = category;
+      if (sortBy) params.sort = sortBy;
+
+      const response = await api.get('/products', { params });
+      setProducts(response.data.products);
+    } catch (error) {
+      console.error('제품 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const params = { search };
+      if (category !== '전체') params.category = category;
+      if (sortBy) params.sort = sortBy;
+
+      const response = await api.get('/products', { params });
+      setProducts(response.data.products);
+    } catch (error) {
+      console.error('검색 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="home">
+      <div className="home-header">
+        <h1>이웃과 함께하는 렌탈 플랫폼</h1>
+        <p>필요한 물건을 이웃과 나눠보세요</p>
+      </div>
+
+      <form onSubmit={handleSearch} className="search-bar">
+        <input
+          type="text"
+          placeholder="어떤 물품을 찾으시나요?"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="search-input"
+        />
+        <button type="submit" className="btn btn-primary">
+          검색
+        </button>
+      </form>
+
+      <div className="filters">
+        <div className="category-filter">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              className={`filter-btn ${category === cat ? 'active' : ''}`}
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="sort-filter">
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            className="sort-select"
+          >
+            <option value="latest">최신순</option>
+            <option value="popular">인기순</option>
+            <option value="price_low">가격 낮은순</option>
+            <option value="price_high">가격 높은순</option>
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="loading">
+          <div className="spinner"></div>
+        </div>
+      ) : products.length === 0 ? (
+        <div className="no-products">
+          <p>등록된 제품이 없습니다</p>
+        </div>
+      ) : (
+        <div className="products-grid">
+          {products.map(product => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Home;
+

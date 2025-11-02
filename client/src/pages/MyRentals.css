@@ -1,0 +1,136 @@
+.my-rentals-page {
+  padding-bottom: 40px;
+}
+
+.my-rentals-page h1 {
+  font-size: 32px;
+  color: var(--dark-color);
+  margin-bottom: 30px;
+}
+
+.rentals-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #eee;
+}
+
+.rentals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rental-card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--box-shadow);
+}
+
+.rental-header {
+  display: flex;
+  gap: 15px;
+  align-items: start;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.rental-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+}
+
+.rental-info {
+  flex: 1;
+}
+
+.rental-info h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: var(--dark-color);
+}
+
+.rental-price {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+}
+
+.rental-period {
+  font-size: 14px;
+  color: #666;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+.status-pending {
+  background-color: var(--warning-color);
+}
+
+.status-approved {
+  background-color: var(--info-color);
+}
+
+.status-ongoing {
+  background-color: var(--primary-color);
+}
+
+.status-completed {
+  background-color: var(--success-color);
+}
+
+.status-cancelled {
+  background-color: var(--danger-color);
+}
+
+.rental-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.detail-item .label {
+  font-weight: 600;
+  color: #666;
+}
+
+.detail-item .value {
+  color: var(--dark-color);
+}
+
+.rental-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.rental-actions .btn {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .rental-header {
+    flex-direction: column;
+  }
+
+  .rental-actions {
+    flex-direction: column;
+  }
+}
+

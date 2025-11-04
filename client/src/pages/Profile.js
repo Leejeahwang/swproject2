@@ -66,12 +66,6 @@ const Profile = () => {
             <h1>{user.username}</h1>
             <div className="profile-stats">
               <div className="stat-item">
-                <span className="stat-label">신뢰도</span>
-                <span className="stat-value trust-score">
-                  🎯 {user.trustScore}점
-                </span>
-              </div>
-              <div className="stat-item">
                 <span className="stat-label">평점</span>
                 <span className="stat-value">
                   ⭐ {user.averageRating.toFixed(1)}

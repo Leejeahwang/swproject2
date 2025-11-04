@@ -82,8 +82,7 @@ router.get('/', async (req, res) => {
         owner: owner ? {
           id: owner.id,
           username: owner.username,
-          trustScore: owner.trustScore || 0,
-          averageRating: owner.averageRating,
+          averageRating: owner.averageRating || 0,
           profileImage: owner.profileImage
         } : null
       };
@@ -133,8 +132,7 @@ router.get('/:id', async (req, res) => {
         _id: owner.id,
         id: owner.id,
         username: owner.username,
-        trustScore: owner.trustScore || 0,
-        averageRating: owner.averageRating,
+        averageRating: owner.averageRating || 0,
         profileImage: owner.profileImage,
         phone: owner.phone,
         primaryRegion: owner.primaryRegion,
@@ -156,7 +154,7 @@ router.get('/:id', async (req, res) => {
         owner: pOwner ? {
           id: pOwner.id,
           username: pOwner.username,
-          trustScore: pOwner.trustScore || 0,
+          averageRating: pOwner.averageRating || 0,
           profileImage: pOwner.profileImage
         } : null
       };
@@ -215,7 +213,7 @@ router.post('/', protect, upload.array('images', 5), async (req, res) => {
       owner: owner ? {
         id: owner.id,
         username: owner.username,
-        trustScore: owner.trustScore || 0,
+        averageRating: owner.averageRating || 0,
         profileImage: owner.profileImage
       } : null
     };
@@ -269,7 +267,7 @@ router.put('/:id', protect, async (req, res) => {
       owner: owner ? {
         id: owner.id,
         username: owner.username,
-        trustScore: owner.trustScore || 0,
+        averageRating: owner.averageRating || 0,
         profileImage: owner.profileImage
       } : null
     };
@@ -363,7 +361,7 @@ router.get('/user/:userId', async (req, res) => {
       owner: owner ? {
         id: owner.id,
         username: owner.username,
-        trustScore: owner.trustScore || 0,
+        averageRating: owner.averageRating || 0,
         profileImage: owner.profileImage
       } : null
     }));

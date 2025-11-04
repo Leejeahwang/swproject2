@@ -79,83 +79,125 @@ const MyRentals = () => {
     }
   };
 
-  const RentalCard = ({ rental, isBorrower }) => (
-    <div className="rental-card">
-      <div className="rental-header">
-        <img 
-          src={`http://localhost:5000${rental.product.images[0]}`}
-          alt={rental.product.title}
-          className="rental-image"
-          onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/100?text=No+Image';
-          }}
-        />
-        <div className="rental-info">
-          <h3>{rental.product.title}</h3>
-          <p className="rental-price">
-            {rental.totalPrice.toLocaleString()}원
-          </p>
-          <p className="rental-period">
-            {new Date(rental.startDate).toLocaleDateString()} ~ 
-            {new Date(rental.endDate).toLocaleDateString()}
-          </p>
+  const RentalCard = ({ rental, isBorrower }) => {
+    // 제품이 삭제된 경우 처리
+    if (!rental.product) {
+      return (
+        <div className="rental-card">
+          <div className="rental-header">
+            <img 
+              src="https://via.placeholder.com/100?text=삭제된+제품"
+              alt="삭제된 제품"
+              className="rental-image"
+            />
+            <div className="rental-info">
+              <h3 style={{ color: '#999' }}>삭제된 제품</h3>
+              <p className="rental-price">
+                {rental.totalPrice.toLocaleString()}원
+              </p>
+              <p className="rental-period">
+                {new Date(rental.startDate).toLocaleDateString()} ~ 
+                {new Date(rental.endDate).toLocaleDateString()}
+              </p>
+            </div>
+            {getStatusBadge(rental.status)}
+          </div>
+          <div className="rental-details">
+            <div className="detail-item">
+              <span className="label">{isBorrower ? '대여자' : '빌린 사람'}</span>
+              <span className="value">
+                {isBorrower ? 
+                  (rental.owner ? `${rental.owner.username} (⭐ ${rental.owner.averageRating?.toFixed(1) || '0.0'})` : '알 수 없음') : 
+                  (rental.borrower ? `${rental.borrower.username} (⭐ ${rental.borrower.averageRating?.toFixed(1) || '0.0'})` : '알 수 없음')
+                }
+              </span>
+            </div>
+            <div className="detail-item">
+              <span className="label">만남 장소</span>
+              <span className="value">{rental.meetingLocation || '정보 없음'}</span>
+            </div>
+          </div>
         </div>
-        {getStatusBadge(rental.status)}
-      </div>
+      );
+    }
 
-      <div className="rental-details">
-        <div className="detail-item">
-          <span className="label">{isBorrower ? '대여자' : '빌린 사람'}</span>
-          <span className="value">
-            {isBorrower ? rental.owner.username : rental.borrower.username}
-            {isBorrower ? 
-              ` (🎯 ${rental.owner.trustScore}점)` : 
-              ` (🎯 ${rental.borrower.trustScore}점)`
-            }
-          </span>
+    return (
+      <div className="rental-card">
+        <div className="rental-header">
+          <img 
+            src={`http://localhost:5000${rental.product.images[0]}`}
+            alt={rental.product.title}
+            className="rental-image"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/100?text=No+Image';
+            }}
+          />
+          <div className="rental-info">
+            <h3>{rental.product.title}</h3>
+            <p className="rental-price">
+              {rental.totalPrice.toLocaleString()}원
+            </p>
+            <p className="rental-period">
+              {new Date(rental.startDate).toLocaleDateString()} ~ 
+              {new Date(rental.endDate).toLocaleDateString()}
+            </p>
+          </div>
+          {getStatusBadge(rental.status)}
         </div>
-        <div className="detail-item">
-          <span className="label">만남 장소</span>
-          <span className="value">{rental.meetingLocation}</span>
+
+        <div className="rental-details">
+          <div className="detail-item">
+            <span className="label">{isBorrower ? '대여자' : '빌린 사람'}</span>
+            <span className="value">
+              {isBorrower ? 
+                (rental.owner ? `${rental.owner.username} (⭐ ${rental.owner.averageRating?.toFixed(1) || '0.0'})` : '알 수 없음') : 
+                (rental.borrower ? `${rental.borrower.username} (⭐ ${rental.borrower.averageRating?.toFixed(1) || '0.0'})` : '알 수 없음')
+              }
+            </span>
+          </div>
+          <div className="detail-item">
+            <span className="label">만남 장소</span>
+            <span className="value">{rental.meetingLocation}</span>
+          </div>
+        </div>
+
+        <div className="rental-actions">
+          {!isBorrower && rental.status === 'pending' && (
+            <button 
+              onClick={() => handleApprove(rental._id)}
+              className="btn btn-primary"
+            >
+              승인
+            </button>
+          )}
+          
+          {!isBorrower && rental.status === 'ongoing' && (
+            <button 
+              onClick={() => handleComplete(rental._id)}
+              className="btn btn-primary"
+            >
+              완료 처리
+            </button>
+          )}
+
+          {rental.status !== 'completed' && rental.status !== 'cancelled' && (
+            <button 
+              onClick={() => handleCancel(rental._id)}
+              className="btn btn-danger"
+            >
+              취소
+            </button>
+          )}
+
+          {rental.status === 'completed' && (
+            <button className="btn btn-outline">
+              리뷰 작성
+            </button>
+          )}
         </div>
       </div>
-
-      <div className="rental-actions">
-        {!isBorrower && rental.status === 'pending' && (
-          <button 
-            onClick={() => handleApprove(rental._id)}
-            className="btn btn-primary"
-          >
-            승인
-          </button>
-        )}
-        
-        {!isBorrower && rental.status === 'ongoing' && (
-          <button 
-            onClick={() => handleComplete(rental._id)}
-            className="btn btn-primary"
-          >
-            완료 처리
-          </button>
-        )}
-
-        {rental.status !== 'completed' && rental.status !== 'cancelled' && (
-          <button 
-            onClick={() => handleCancel(rental._id)}
-            className="btn btn-danger"
-          >
-            취소
-          </button>
-        )}
-
-        {rental.status === 'completed' && (
-          <button className="btn btn-outline">
-            리뷰 작성
-          </button>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (

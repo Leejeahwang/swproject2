@@ -187,7 +187,6 @@ const ProductDetail = () => {
             <Link to={`/profile/${product.owner._id}`} className="owner-card">
               <div className="owner-details">
                 <h4>{product.owner.username}</h4>
-                <p>🎯 신뢰도: {product.owner.trustScore}점</p>
                 <p>⭐ 평점: {product.owner.averageRating.toFixed(1)}</p>
                 <p>대여 {product.owner.rentalCount}회</p>
               </div>

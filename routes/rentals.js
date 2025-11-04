@@ -132,7 +132,7 @@ router.get('/my-rentals', protect, async (req, res) => {
           id: owner.id,
           username: owner.username,
           phone: owner.phone,
-          trustScore: owner.trustScore || 0,
+          averageRating: owner.averageRating || 0,
           profileImage: owner.profileImage
         } : null
       };
@@ -172,7 +172,7 @@ router.get('/my-listings', protect, async (req, res) => {
           id: borrower.id,
           username: borrower.username,
           phone: borrower.phone,
-          trustScore: borrower.trustScore || 0,
+          averageRating: borrower.averageRating || 0,
           profileImage: borrower.profileImage
         } : null
       };
@@ -220,7 +220,7 @@ router.get('/:id', protect, async (req, res) => {
         id: owner.id,
         username: owner.username,
         phone: owner.phone,
-        trustScore: owner.trustScore || 0,
+        averageRating: owner.averageRating || 0,
         profileImage: owner.profileImage
       } : null,
       borrower: borrower ? {
@@ -228,7 +228,7 @@ router.get('/:id', protect, async (req, res) => {
         id: borrower.id,
         username: borrower.username,
         phone: borrower.phone,
-        trustScore: borrower.trustScore || 0,
+        averageRating: borrower.averageRating || 0,
         profileImage: borrower.profileImage
       } : null
     };

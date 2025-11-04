@@ -4,27 +4,6 @@ const { protect } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
 
-// 사용자 신뢰도 점수 업데이트 함수
-const updateUserTrustScore = (userId) => {
-  const user = db.get('users').find({ id: userId }).value();
-  if (!user) return;
-
-  // 신뢰도 점수 계산 (-100 ~ 100)
-  // 1. 평점 기반 점수 (-60 ~ +60)
-  const ratingScore = (user.averageRating - 3) * 30; // 평점 1점당 ±30점
-  
-  // 2. 활동 점수 (0 ~ +40)
-  const activityScore = Math.min((user.rentalCount + user.borrowCount) * 2, 40);
-  
-  // 최종 점수 계산
-  const trustScore = Math.max(-100, Math.min(100, ratingScore + activityScore));
-
-  db.get('users')
-    .find({ id: userId })
-    .assign({ trustScore: Math.round(trustScore) })
-    .write();
-};
-
 // @route   POST /api/reviews
 // @desc    리뷰 작성
 // @access  Private
@@ -111,9 +90,6 @@ router.post('/', protect, async (req, res) => {
       .assign({ averageRating: avgRating })
       .write();
 
-    // 신뢰도 점수 업데이트
-    updateUserTrustScore(reviewee);
-
     // 관련 정보 추가해서 반환
     const reviewer = db.get('users').find({ id: review.reviewer }).value();
     const revieweeUser = db.get('users').find({ id: review.reviewee }).value();
@@ -167,7 +143,7 @@ router.get('/user/:userId', async (req, res) => {
           id: reviewer.id,
           username: reviewer.username,
           profileImage: reviewer.profileImage,
-          trustScore: reviewer.trustScore || 0
+          averageRating: reviewer.averageRating || 0
         } : null,
         product: product ? {
           id: product.id,

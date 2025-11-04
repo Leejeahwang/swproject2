@@ -16,7 +16,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          🏠 이웃렌트
+          🔗 쉐어허브
         </Link>
         
         <div className="navbar-menu">
@@ -28,7 +28,7 @@ const Navbar = () => {
               <Link to="/my-rentals" className="navbar-link">대여 내역</Link>
               <Link to="/chats" className="navbar-link">채팅</Link>
               <Link to={`/profile/${user.id}`} className="navbar-link">
-                프로필 ({user.trustScore}점)
+                프로필
               </Link>
               <button onClick={handleLogout} className="navbar-btn">
                 로그아웃

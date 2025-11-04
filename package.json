@@ -1,7 +1,7 @@
 {
-  "name": "rental-platform",
+  "name": "sharehub",
   "version": "1.0.0",
-  "description": "이웃 간 단기 렌탈 플랫폼 서비스",
+  "description": "쉐어허브 - 이웃 간 물품 공유 플랫폼",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -1,0 +1,19 @@
+{
+  "watch": [
+    "server.js",
+    "routes",
+    "middleware",
+    "database/db.js"
+  ],
+  "ignore": [
+    "database/db.json",
+    "uploads/*",
+    "node_modules",
+    "client"
+  ],
+  "ext": "js,json",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
+

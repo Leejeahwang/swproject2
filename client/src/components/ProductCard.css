@@ -1,0 +1,107 @@
+.product-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-card {
+  background: white;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--box-shadow);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 대여중인 제품에 약간의 오버레이 효과 */
+.product-card.rented .product-image {
+  opacity: 0.85;
+}
+
+.product-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.status-badge.available {
+  background-color: var(--success-color);
+}
+
+.status-badge.rented {
+  background-color: #ff9800;
+  color: white;
+}
+
+.status-badge.unavailable {
+  background-color: var(--danger-color);
+}
+
+.product-info {
+  padding: 15px;
+}
+
+.product-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--dark-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.product-location {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.product-owner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.owner-name {
+  font-size: 14px;
+  color: #666;
+}
+
+.owner-temp {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+

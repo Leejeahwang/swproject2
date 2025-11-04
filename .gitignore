@@ -1,0 +1,14 @@
+# Node.js (Root)
+/node_modules
+.env
+.DS_Store
+npm-debug.log
+db.json   
+
+# Client (React)
+/client/node_modules
+/client/build
+.vscode/
+
+# User Uploads
+/uploads

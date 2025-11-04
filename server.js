@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const http = require('http');
 const socketIo = require('socket.io');
 const db = require('./database/db');
+const fs = require('fs'); 
+const path = require('path'); 
 
 // 환경 변수 로드
 dotenv.config();
@@ -23,6 +25,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
+
+// [폴더 자동 생성 로직]
+// uploads 폴더의 절대 경로를 만듭니다.
+const uploadsDir = path.join(__dirname, 'uploads');
+
+// 'uploads' 폴더가 존재하는지 확인합니다.
+if (!fs.existsSync(uploadsDir)) {
+  // 폴더가 존재하지 않으면, 'uploads' 폴더를 생성합니다.
+  fs.mkdirSync(uploadsDir);
+  console.log('✅ "uploads" 폴더가 존재하지 않아 새로 생성했습니다.');
+}
 
 // 데이터베이스 초기화 확인
 console.log('✅ 로컬 데이터베이스 연결 성공 (lowdb)');

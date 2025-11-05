@@ -4,12 +4,54 @@ const { protect } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
 
+// 날짜 범위가 겹치는지 확인하는 함수
+const isDateRangeOverlap = (start1, end1, start2, end2) => {
+  const s1 = new Date(start1);
+  const e1 = new Date(end1);
+  const s2 = new Date(start2);
+  const e2 = new Date(end2);
+  
+  return s1 <= e2 && s2 <= e1;
+};
+
+// @route   GET /api/rentals/product/:productId/reserved-dates
+// @desc    특정 제품의 예약된 날짜 조회
+// @access  Public
+router.get('/product/:productId/reserved-dates', async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    // 승인되었거나 진행중인 대여만 조회 (pending, cancelled, completed 제외)
+    const rentals = db.get('rentals')
+      .filter(r => 
+        r.product === productId && 
+        (r.status === 'approved' || r.status === 'ongoing')
+      )
+      .value();
+    
+    // 예약된 날짜 범위 목록 반환
+    const reservedDates = rentals.map(rental => ({
+      startDate: rental.startDate,
+      startTime: rental.startTime,
+      endDate: rental.endDate,
+      endTime: rental.endTime,
+      startDateTime: rental.startDateTime,
+      endDateTime: rental.endDateTime,
+      status: rental.status
+    }));
+    
+    res.json({ success: true, reservedDates });
+  } catch (error) {
+    res.status(500).json({ message: '예약 날짜 조회 실패', error: error.message });
+  }
+});
+
 // @route   POST /api/rentals
 // @desc    대여 요청 생성
 // @access  Private
 router.post('/', protect, async (req, res) => {
   try {
-    const { productId, startDate, endDate, meetingLocation } = req.body;
+    const { productId, startDate, startTime, endDate, endTime, meetingLocation } = req.body;
 
     const product = db.get('products').find({ id: productId }).value();
     
@@ -17,23 +59,42 @@ router.post('/', protect, async (req, res) => {
       return res.status(404).json({ message: '제품을 찾을 수 없습니다' });
     }
 
-    if (product.status !== 'available') {
-      return res.status(400).json({ message: '현재 대여 불가능한 제품입니다' });
-    }
-
     if (product.owner === req.user.id) {
       return res.status(400).json({ message: '자신의 제품은 대여할 수 없습니다' });
     }
 
-    // 대여 기간 계산
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    // 시작 및 종료 날짜/시간 결합
+    const startDateTime = `${startDate}T${startTime}:00`;
+    const endDateTime = `${endDate}T${endTime}:00`;
+
+    // 날짜 중복 체크 - 승인되었거나 진행중인 대여와 겹치는지 확인
+    const existingRentals = db.get('rentals')
+      .filter(r => 
+        r.product === productId && 
+        (r.status === 'approved' || r.status === 'ongoing')
+      )
+      .value();
+    
+    const hasOverlap = existingRentals.some(rental => 
+      isDateRangeOverlap(startDateTime, endDateTime, rental.startDateTime, rental.endDateTime)
+    );
+    
+    if (hasOverlap) {
+      return res.status(400).json({ 
+        message: '선택하신 기간에 이미 다른 예약이 있습니다. 다른 날짜를 선택해주세요.' 
+      });
+    }
+
+    // 대여 기간 계산 (시간 포함)
+    const start = new Date(startDateTime);
+    const end = new Date(endDateTime);
+    const hours = Math.ceil((end - start) / (1000 * 60 * 60));
+    const days = Math.ceil(hours / 24);
     
     let totalPrice;
     switch(product.priceUnit) {
       case '시간':
-        totalPrice = product.price * days * 24;
+        totalPrice = product.price * hours;
         break;
       case '일':
         totalPrice = product.price * days;
@@ -56,7 +117,11 @@ router.post('/', protect, async (req, res) => {
       owner: product.owner,
       borrower: req.user.id,
       startDate,
+      startTime,
       endDate,
+      endTime,
+      startDateTime,
+      endDateTime,
       totalPrice,
       meetingLocation,
       status: 'pending',
@@ -258,18 +323,31 @@ router.put('/:id/approve', protect, async (req, res) => {
       return res.status(400).json({ message: '대기 중인 요청만 승인할 수 있습니다' });
     }
 
+    // 날짜 중복 체크 - 승인 시에도 다시 확인
+    const existingRentals = db.get('rentals')
+      .filter(r => 
+        r.product === rental.product && 
+        r.id !== rental.id &&
+        (r.status === 'approved' || r.status === 'ongoing')
+      )
+      .value();
+    
+    const hasOverlap = existingRentals.some(r => 
+      isDateRangeOverlap(rental.startDateTime, rental.endDateTime, r.startDateTime, r.endDateTime)
+    );
+    
+    if (hasOverlap) {
+      return res.status(400).json({ 
+        message: '해당 기간에 이미 승인된 다른 예약이 있습니다.' 
+      });
+    }
+
     db.get('rentals')
       .find({ id: req.params.id })
       .assign({ 
         status: 'approved',
         updatedAt: new Date().toISOString()
       })
-      .write();
-
-    // 제품 상태 변경
-    db.get('products')
-      .find({ id: rental.product })
-      .assign({ status: 'rented' })
       .write();
 
     const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
@@ -336,12 +414,6 @@ router.put('/:id/complete', protect, async (req, res) => {
       })
       .write();
 
-    // 제품 상태 변경
-    db.get('products')
-      .find({ id: rental.product })
-      .assign({ status: 'available' })
-      .write();
-
     // 사용자 렌탈 횟수 업데이트
     const owner = db.get('users').find({ id: rental.owner }).value();
     const borrower = db.get('users').find({ id: rental.borrower }).value();
@@ -393,14 +465,6 @@ router.put('/:id/cancel', protect, async (req, res) => {
         updatedAt: new Date().toISOString()
       })
       .write();
-
-    // 제품 상태 복구
-    if (rental.status === 'approved' || rental.status === 'ongoing') {
-      db.get('products')
-        .find({ id: rental.product })
-        .assign({ status: 'available' })
-        .write();
-    }
 
     const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
     res.json({ success: true, rental: updatedRental });

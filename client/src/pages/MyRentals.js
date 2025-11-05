@@ -43,6 +43,15 @@ const MyRentals = () => {
     return <span className={`status-badge ${badge.class}`}>{badge.text}</span>;
   };
 
+  const formatDateTime = (date, time) => {
+    if (!date) return '';
+    const dateStr = new Date(date).toLocaleDateString('ko-KR');
+    if (time) {
+      return `${dateStr} ${time}`;
+    }
+    return dateStr;
+  };
+
   const handleApprove = async (rentalId) => {
     if (!window.confirm('대여를 승인하시겠습니까?')) return;
 
@@ -96,8 +105,8 @@ const MyRentals = () => {
                 {rental.totalPrice.toLocaleString()}원
               </p>
               <p className="rental-period">
-                {new Date(rental.startDate).toLocaleDateString()} ~ 
-                {new Date(rental.endDate).toLocaleDateString()}
+                {formatDateTime(rental.startDate, rental.startTime)} ~ 
+                {formatDateTime(rental.endDate, rental.endTime)}
               </p>
             </div>
             {getStatusBadge(rental.status)}
@@ -138,8 +147,8 @@ const MyRentals = () => {
               {rental.totalPrice.toLocaleString()}원
             </p>
             <p className="rental-period">
-              {new Date(rental.startDate).toLocaleDateString()} ~ 
-              {new Date(rental.endDate).toLocaleDateString()}
+              {formatDateTime(rental.startDate, rental.startTime)} ~ 
+              {formatDateTime(rental.endDate, rental.endTime)}
             </p>
           </div>
           {getStatusBadge(rental.status)}

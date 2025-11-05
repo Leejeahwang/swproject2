@@ -234,6 +234,43 @@
   flex: 1;
 }
 
+/* 폼 스타일 */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
 @media (max-width: 768px) {
   .detail-container {
     grid-template-columns: 1fr;
@@ -256,5 +293,122 @@
   .action-buttons {
     flex-direction: column;
   }
+}
+
+/* 예약 달력 섹션 */
+.calendar-section {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+}
+
+.calendar-section h2 {
+  margin-bottom: 15px;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+.calendar-info {
+  background: #e3f2fd;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: #1565c0;
+  margin-bottom: 25px;
+  text-align: center;
+  font-size: 0.95rem;
+  border: 1px solid #90caf9;
+}
+
+.reserved-dates-detail {
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+}
+
+.reserved-dates-detail h3 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  color: var(--text-dark);
+}
+
+.reserved-dates-detail ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reserved-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #fff5f5;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.reserved-icon {
+  font-size: 1.2rem;
+}
+
+.reserved-item .status-badge {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.reserved-item .status-badge.approved {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.reserved-item .status-badge.ongoing {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.no-reservations {
+  text-align: center;
+  padding: 30px;
+  background: #f1f8e9;
+  border-radius: 8px;
+  color: #558b2f;
+  font-size: 1.05rem;
+}
+
+/* 모달 내 예약 불가 날짜 안내 */
+.modal-warning {
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.modal-warning p {
+  margin: 0 0 10px 0;
+  color: #e65100;
+}
+
+.reserved-dates-warning {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reserved-dates-warning li {
+  padding: 6px 10px;
+  background: white;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #d84315;
 }
 

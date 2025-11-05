@@ -14,11 +14,12 @@ const ChatList = () => {
   const loadChats = async () => {
     try {
       setLoading(true);
-      // Note: 실제로는 채팅 목록을 가져오는 API가 필요합니다
-      // 여기서는 예시로 빈 배열을 사용합니다
-      setChats([]);
+      // API를 호출하여 실제 채팅 목록을 가져옵니다
+      const response = await api.get('/chats');
+      setChats(response.data || []);
     } catch (error) {
       console.error('채팅 목록 로드 실패:', error);
+      setChats([]);
     } finally {
       setLoading(false);
     }
@@ -50,12 +51,12 @@ const ChatList = () => {
         <div className="chats-list">
           {chats.map(chat => (
             <Link 
-              key={chat._id} 
+              key={chat.room} 
               to={`/chats/${chat.room}`}
               className="chat-item"
             >
               <div className="chat-user">
-                {chat.otherUser.profileImage && (
+                {chat.otherUser && chat.otherUser.profileImage && (
                   <img 
                     src={`http://localhost:5000${chat.otherUser.profileImage}`}
                     alt={chat.otherUser.username}
@@ -63,14 +64,14 @@ const ChatList = () => {
                   />
                 )}
                 <div className="chat-info">
-                  <h3>{chat.otherUser.username}</h3>
-                  <p className="chat-product">{chat.product?.title}</p>
+                  <h3>{chat.otherUser?.username || '알 수 없음'}</h3>
+                  <p className="chat-product">{chat.product?.title || ''}</p>
                 </div>
               </div>
               <div className="chat-preview">
-                <p className="last-message">{chat.lastMessage}</p>
+                <p className="last-message">{chat.lastMessage || '메시지가 없습니다'}</p>
                 <span className="chat-time">
-                  {new Date(chat.lastMessageAt).toLocaleString()}
+                  {chat.lastMessageAt ? new Date(chat.lastMessageAt).toLocaleString() : ''}
                 </span>
               </div>
             </Link>

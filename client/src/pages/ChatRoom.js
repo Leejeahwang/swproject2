@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import io from 'socket.io-client';
+import api from '../services/api';
 import './ChatRoom.css';
 
 const ChatRoom = () => {
@@ -12,10 +13,34 @@ const ChatRoom = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [socket, setSocket] = useState(null);
+  const [chatInfo, setChatInfo] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    // Socket.io 연결
+    // 1. 이전 대화 내역 및 채팅방 정보 불러오기
+    const fetchMessages = async () => {
+      if (!user || !user.id) return;
+      
+      try {
+        const response = await api.get(`/chats/${roomId}`);
+        setMessages(response.data.messages || []);
+        // 채팅방 정보 저장 (상대방, 제품 정보 포함)
+        setChatInfo({
+          otherUser: response.data.otherUser,
+          product: response.data.product
+        });
+      } catch (error) {
+        console.error('이전 메시지 로드 실패:', error);
+        if (error.response && error.response.status === 404) {
+          // 새 채팅방인 경우
+          setMessages([]);
+        }
+      }
+    };
+    
+    fetchMessages();
+
+    // 2. Socket.io 연결
     const newSocket = io('http://localhost:5000/chat');
     setSocket(newSocket);
 
@@ -30,7 +55,7 @@ const ChatRoom = () => {
     return () => {
       newSocket.disconnect();
     };
-  }, [roomId]);
+  }, [roomId, user]);
 
   useEffect(() => {
     scrollToBottom();
@@ -61,7 +86,16 @@ const ChatRoom = () => {
         <button onClick={() => navigate('/chats')} className="back-btn">
           ← 뒤로
         </button>
-        <h2>채팅</h2>
+        <div className="chat-header-info">
+          <h2>
+            {chatInfo?.otherUser?.username || '채팅'}
+          </h2>
+          {chatInfo?.product && (
+            <p className="chat-product-name">
+              {chatInfo.product.title}
+            </p>
+          )}
+        </div>
         <div></div>
       </div>
 

@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const http = require('http');
 const socketIo = require('socket.io');
 const db = require('./database/db');
+const fs = require('fs'); 
+const path = require('path'); 
 
 // 환경 변수 로드
 dotenv.config();
@@ -24,6 +26,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
+// uploads 폴더 자동 생성
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+  console.log('✅ "uploads" 폴더가 존재하지 않아 새로 생성했습니다.');
+}
+
 // 데이터베이스 초기화 확인
 console.log('✅ 로컬 데이터베이스 연결 성공 (lowdb)');
 
@@ -33,6 +42,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/rentals', require('./routes/rentals'));
+app.use('/api/chats', require('./routes/chats'));
 
 // Socket.io 채팅 기능
 const chatNamespace = io.of('/chat');
@@ -63,10 +73,16 @@ chatNamespace.on('connection', (socket) => {
     let chat = db.get('chats').find({ room: roomId }).value();
     
     if (!chat) {
+      // roomId를 분리: userId_ownerId_productId
+      const parts = roomId.split('_'); 
+      const participants = [parts[0], parts[1]]; // 사용자 ID만 저장
+      const productId = parts[2] || null; // 제품 ID 별도 저장
+
       chat = {
         id: Date.now().toString(),
         room: roomId,
-        participants: [],
+        participants: participants,
+        productId: productId,
         messages: [],
         lastMessage: '',
         lastMessageAt: new Date().toISOString(),

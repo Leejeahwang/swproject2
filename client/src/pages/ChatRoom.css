@@ -9,16 +9,29 @@
 }
 
 .chat-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 100px 1fr 100px;
   align-items: center;
   padding: 20px;
   border-bottom: 2px solid #eee;
   background: white;
 }
 
-.chat-header h2 {
+.chat-header-info {
+  text-align: center;
+}
+
+.chat-header-info h2 {
   color: var(--dark-color);
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+}
+
+.chat-product-name {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
 }
 
 .back-btn {
@@ -29,6 +42,7 @@
   font-size: 16px;
   color: var(--dark-color);
   transition: color 0.2s;
+  justify-self: start;
 }
 
 .back-btn:hover {

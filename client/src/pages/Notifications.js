@@ -92,9 +92,13 @@ const Notifications = () => {
               onClick={() => handleMarkAsRead(notification.id, notification.link)}
             >
               <div className="notification-icon">
-                {notification.type === 'rental' && '📦'}
+                {notification.type === 'rental_request' && '📝'}
+                {notification.type === 'rental_confirmed' && '✅'}
+                {notification.type === 'return_request' && '📦'}
+                {notification.type === 'return_confirmed' && '✨'}
                 {notification.type === 'chat' && '💬'}
                 {notification.type === 'review' && '⭐'}
+                {!['rental_request', 'rental_confirmed', 'return_request', 'return_confirmed', 'chat', 'review'].includes(notification.type) && '🔔'}
               </div>
               <div className="notification-content">
                 <p className="notification-text">{notification.message}</p>

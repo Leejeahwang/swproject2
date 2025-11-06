@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
+const { createNotification } = require('./notifications');
 
 // @route   POST /api/reviews
 // @desc    리뷰 작성
@@ -89,6 +90,14 @@ router.post('/', protect, async (req, res) => {
       .find({ id: reviewee })
       .assign({ averageRating: avgRating })
       .write();
+
+    // 리뷰 받은 사람에게 알림 생성
+    createNotification(
+      reviewee,
+      'review',
+      `${req.user.username}님이 리뷰를 작성했습니다 (${rating}점)`,
+      `/profile/${reviewee}`
+    );
 
     // 관련 정보 추가해서 반환
     const reviewer = db.get('users').find({ id: review.reviewer }).value();

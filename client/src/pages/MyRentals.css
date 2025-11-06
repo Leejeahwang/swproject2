@@ -142,6 +142,53 @@
   flex: 1;
 }
 
+/* 리뷰 모달 */
+.review-target {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.review-target p {
+  margin: 5px 0;
+  font-size: 15px;
+  color: var(--dark-color);
+}
+
+.review-product {
+  font-size: 14px !important;
+  color: #666 !important;
+}
+
+.star-rating {
+  display: flex;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.star-rating .star {
+  font-size: 32px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  filter: grayscale(100%);
+}
+
+.star-rating .star.active {
+  filter: grayscale(0%);
+}
+
+.star-rating .star:hover {
+  transform: scale(1.2);
+}
+
+.rating-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 10px;
+}
+
 @media (max-width: 768px) {
   .rental-header {
     flex-direction: column;
@@ -149,6 +196,10 @@
 
   .rental-actions {
     flex-direction: column;
+  }
+  
+  .star-rating .star {
+    font-size: 28px;
   }
 }
 

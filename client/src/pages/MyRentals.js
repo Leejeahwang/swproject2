@@ -11,6 +11,14 @@ const MyRentals = () => {
   const [rentedRentals, setRentedRentals] = useState([]);
   const [historyRentals, setHistoryRentals] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // 리뷰 작성 모달 상태
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedRental, setSelectedRental] = useState(null);
+  const [reviewData, setReviewData] = useState({
+    rating: 5,
+    comment: ''
+  });
 
   useEffect(() => {
     loadRentals();
@@ -106,6 +114,35 @@ const MyRentals = () => {
     }
   };
 
+  const handleOpenReviewModal = (rental, isBorrower) => {
+    setSelectedRental({ ...rental, isBorrower });
+    setReviewData({ rating: 5, comment: '' });
+    setShowReviewModal(true);
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+
+    try {
+      const type = selectedRental.isBorrower ? 'borrower' : 'owner';
+      
+      await api.post('/reviews', {
+        rentalId: selectedRental._id,
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+        type
+      });
+
+      alert('리뷰가 작성되었습니다');
+      setShowReviewModal(false);
+      setSelectedRental(null);
+      setReviewData({ rating: 5, comment: '' });
+      loadRentals();
+    } catch (error) {
+      alert(error.response?.data?.message || '리뷰 작성 실패');
+    }
+  };
+
   const RentalCard = ({ rental, isBorrower }) => {
     return (
       <div className="rental-card">
@@ -170,7 +207,41 @@ const MyRentals = () => {
           </div>
         </div>
 
-        {/* 과거 대여(완료/취소)에서는 액션 버튼 표시 안함 */}
+        {/* 완료된 대여에서는 리뷰 작성 버튼 표시 */}
+        {rental.status === 'completed' && (
+          <div className="rental-actions">
+            {isBorrower && !rental.borrowerReviewed && (
+              <button 
+                onClick={() => handleOpenReviewModal(rental, true)}
+                className="btn btn-primary"
+              >
+                ⭐ 리뷰 작성
+              </button>
+            )}
+            {!isBorrower && !rental.ownerReviewed && (
+              <button 
+                onClick={() => handleOpenReviewModal(rental, false)}
+                className="btn btn-primary"
+              >
+                ⭐ 리뷰 작성
+              </button>
+            )}
+            {((isBorrower && rental.borrowerReviewed) || (!isBorrower && rental.ownerReviewed)) && (
+              <div style={{ 
+                padding: '10px', 
+                backgroundColor: '#d1fae5', 
+                borderRadius: '8px',
+                color: '#065f46',
+                fontSize: '14px',
+                textAlign: 'center'
+              }}>
+                ✅ 리뷰 작성 완료
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 진행 중인 대여 액션 버튼 */}
         {rental.status !== 'completed' && rental.status !== 'cancelled' && (
           <div className="rental-actions">
             {/* 빌려주는 사람: pending에서 승인 */}
@@ -310,6 +381,66 @@ const MyRentals = () => {
           </div>
         )}
       </div>
+
+      {/* 리뷰 작성 모달 */}
+      {showReviewModal && selectedRental && (
+        <div className="modal-overlay" onClick={() => setShowReviewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>리뷰 작성</h2>
+            
+            <div className="review-target">
+              <p>
+                {selectedRental.isBorrower 
+                  ? `${selectedRental.owner?.username}님에 대한 리뷰` 
+                  : `${selectedRental.borrower?.username}님에 대한 리뷰`}
+              </p>
+              <p className="review-product">제품: {selectedRental.product?.title}</p>
+            </div>
+
+            <form onSubmit={handleSubmitReview}>
+              <div className="form-group">
+                <label>별점</label>
+                <div className="star-rating">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <span
+                      key={star}
+                      className={`star ${reviewData.rating >= star ? 'active' : ''}`}
+                      onClick={() => setReviewData({ ...reviewData, rating: star })}
+                    >
+                      ⭐
+                    </span>
+                  ))}
+                </div>
+                <p className="rating-text">{reviewData.rating}점</p>
+              </div>
+
+              <div className="form-group">
+                <label>코멘트 (선택사항)</label>
+                <textarea
+                  value={reviewData.comment}
+                  onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                  placeholder="거래 경험을 공유해주세요"
+                  rows={4}
+                  maxLength={500}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit" className="btn btn-primary">
+                  리뷰 제출
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowReviewModal(false)}
+                  className="btn btn-outline"
+                >
+                  취소
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

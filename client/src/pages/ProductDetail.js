@@ -30,6 +30,7 @@ const ProductDetail = () => {
   useEffect(() => {
     loadProduct();
     loadReservedDates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadProduct = async () => {
@@ -39,11 +40,13 @@ const ProductDetail = () => {
       setProduct(response.data.product);
       setRecommendedProducts(response.data.recommendedProducts || []);
       
-      if (user) {
+      if (user && response.data.product.likes) {
         setLiked(response.data.product.likes.includes(user.id));
       }
     } catch (error) {
       console.error('제품 로드 실패:', error);
+      alert('제품을 불러오는데 실패했습니다.');
+      navigate('/');
     } finally {
       setLoading(false);
     }
@@ -162,8 +165,14 @@ const ProductDetail = () => {
       return;
     }
 
+    if (!product.owner) {
+      alert('판매자 정보를 찾을 수 없습니다');
+      return;
+    }
+
     // 채팅방 ID 생성 (사용자ID_판매자ID_제품ID)
-    const roomId = `${user.id}_${product.owner.id}_${id}`;
+    const ownerId = product.owner._id || product.owner.id;
+    const roomId = `${user.id}_${ownerId}_${id}`;
     navigate(`/chats/${roomId}`);
   };
 
@@ -179,7 +188,7 @@ const ProductDetail = () => {
     return <div className="no-products">제품을 찾을 수 없습니다</div>;
   }
 
-  const isOwner = user && product.owner._id === user.id;
+  const isOwner = user && product.owner && (product.owner._id === user.id || product.owner.id === user.id);
 
   return (
     <div className="product-detail">
@@ -234,7 +243,7 @@ const ProductDetail = () => {
               <span className="meta-value">📍 {product.region}</span>
             </div>
             <div className="meta-item">
-              <span className="meta-label">거래 희망 장소</span>
+              <span className="meta-label">상세 주소</span>
               <span className="meta-value">{product.location}</span>
             </div>
             <div className="meta-item">
@@ -243,16 +252,18 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          <div className="owner-info">
-            <h3>판매자 정보</h3>
-            <Link to={`/profile/${product.owner._id}`} className="owner-card">
-              <div className="owner-details">
-                <h4>{product.owner.username}</h4>
-                <p>⭐ 평점: {product.owner.averageRating.toFixed(1)}</p>
-                <p>대여 {product.owner.rentalCount}회</p>
-              </div>
-            </Link>
-          </div>
+          {product.owner && (
+            <div className="owner-info">
+              <h3>판매자 정보</h3>
+              <Link to={`/profile/${product.owner._id || product.owner.id}`} className="owner-card">
+                <div className="owner-details">
+                  <h4>{product.owner.username}</h4>
+                  <p>⭐ 평점: {(product.owner.averageRating || 0).toFixed(1)}</p>
+                  <p>대여 {product.owner.rentalCount || 0}회</p>
+                </div>
+              </Link>
+            </div>
+          )}
 
           <div className="action-buttons">
             {isOwner ? (

@@ -5,10 +5,14 @@ import './ProductForm.css';
 
 const CATEGORIES = [
   '전자기기', '생활가전', '스포츠/레저', '캠핑용품', 
-  '공구', '육아용품', '책/교육', '의류/패션', '기타'
+  '공구', '육아용품', '책/교육', '의류/패션', '악기', '여행', '기타'
 ];
 
-const PRICE_UNITS = ['시간', '일', '주', '월'];
+const REGIONS = [
+  '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+  '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'
+];
+
 const CONDITIONS = ['최상', '상', '중', '하'];
 
 const ProductForm = () => {
@@ -34,6 +38,7 @@ const ProductForm = () => {
     if (isEdit) {
       loadProduct();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadProduct = async () => {
@@ -82,9 +87,11 @@ const ProductForm = () => {
     try {
       const formDataToSend = new FormData();
       
+      // priceUnit을 '일'로 고정
       Object.keys(formData).forEach(key => {
         formDataToSend.append(key, formData[key]);
       });
+      formDataToSend.set('priceUnit', '일');
 
       if (images.length > 0) {
         images.forEach(image => {
@@ -97,7 +104,8 @@ const ProductForm = () => {
       }
 
       if (isEdit) {
-        await api.put(`/products/${id}`, formData);
+        const updateData = { ...formData, priceUnit: '일' };
+        await api.put(`/products/${id}`, updateData);
         alert('제품이 수정되었습니다');
       } else {
         await api.post('/products', formDataToSend, {
@@ -168,7 +176,7 @@ const ProductForm = () => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>대여 가격</label>
+              <label>일일 대여 가격</label>
               <input
                 type="number"
                 name="price"
@@ -178,19 +186,6 @@ const ProductForm = () => {
                 min="0"
                 placeholder="0"
               />
-            </div>
-
-            <div className="form-group">
-              <label>단위</label>
-              <select
-                name="priceUnit"
-                value={formData.priceUnit}
-                onChange={handleChange}
-              >
-                {PRICE_UNITS.map(unit => (
-                  <option key={unit} value={unit}>{unit}</option>
-                ))}
-              </select>
             </div>
 
             <div className="form-group">
@@ -208,26 +203,29 @@ const ProductForm = () => {
           </div>
 
           <div className="form-group">
-            <label>지역</label>
-            <input
-              type="text"
+            <label>지역 (시/도)</label>
+            <select
               name="region"
               value={formData.region}
               onChange={handleChange}
               required
-              placeholder="예: 서울"
-            />
+            >
+              <option value="">지역을 선택하세요</option>
+              {REGIONS.map(reg => (
+                <option key={reg} value={reg}>{reg}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">
-            <label>거래 희망 장소</label>
+            <label>상세 주소</label>
             <input
               type="text"
               name="location"
               value={formData.location}
               onChange={handleChange}
               required
-              placeholder="예: 강남역 3번 출구"
+              placeholder="예: 강남구 역삼동, 강남역 3번 출구"
             />
           </div>
 

@@ -42,6 +42,12 @@
   height: 100px;
   object-fit: cover;
   border-radius: var(--border-radius);
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.rental-image:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
 }
 
 .rental-info {
@@ -52,6 +58,14 @@
   font-size: 20px;
   margin-bottom: 8px;
   color: var(--dark-color);
+}
+
+.rental-info h3 a {
+  transition: color 0.2s;
+}
+
+.rental-info h3 a:hover {
+  color: var(--primary-color);
 }
 
 .rental-price {
@@ -84,6 +98,10 @@
 
 .status-ongoing {
   background-color: var(--primary-color);
+}
+
+.status-returning {
+  background-color: #ff9800;
 }
 
 .status-completed {

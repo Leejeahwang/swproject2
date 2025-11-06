@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './MyRentals.css';
 
 const MyRentals = () => {
-  const [activeTab, setActiveTab] = useState('borrowed'); // borrowed, rented
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('borrowed'); // borrowed, rented, history
   const [borrowedRentals, setBorrowedRentals] = useState([]);
   const [rentedRentals, setRentedRentals] = useState([]);
+  const [historyRentals, setHistoryRentals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,13 +19,15 @@ const MyRentals = () => {
   const loadRentals = async () => {
     try {
       setLoading(true);
-      const [borrowedResponse, rentedResponse] = await Promise.all([
+      const [borrowedResponse, rentedResponse, historyResponse] = await Promise.all([
         api.get('/rentals/my-rentals'),
-        api.get('/rentals/my-listings')
+        api.get('/rentals/my-listings'),
+        api.get('/rentals/history')
       ]);
 
       setBorrowedRentals(borrowedResponse.data.rentals);
       setRentedRentals(rentedResponse.data.rentals);
+      setHistoryRentals(historyResponse.data.rentals);
     } catch (error) {
       console.error('대여 내역 로드 실패:', error);
     } finally {
@@ -33,8 +38,9 @@ const MyRentals = () => {
   const getStatusBadge = (status) => {
     const badges = {
       pending: { text: '대기중', class: 'status-pending' },
-      approved: { text: '승인됨', class: 'status-approved' },
+      approved: { text: '예약 확정', class: 'status-approved' },
       ongoing: { text: '진행중', class: 'status-ongoing' },
+      returning: { text: '반납 대기', class: 'status-returning' },
       completed: { text: '완료', class: 'status-completed' },
       cancelled: { text: '취소됨', class: 'status-cancelled' }
     };
@@ -64,8 +70,20 @@ const MyRentals = () => {
     }
   };
 
+  const handleReturn = async (rentalId) => {
+    if (!window.confirm('물품을 반납하시겠습니까?\n빌려준 사람이 확인해야 최종 완료됩니다.')) return;
+
+    try {
+      await api.put(`/rentals/${rentalId}/return`);
+      alert('반납 요청이 완료되었습니다.\n빌려준 사람의 확인을 기다려주세요.');
+      loadRentals();
+    } catch (error) {
+      alert(error.response?.data?.message || '반납 요청 실패');
+    }
+  };
+
   const handleComplete = async (rentalId) => {
-    if (!window.confirm('대여를 완료 처리하시겠습니까?')) return;
+    if (!window.confirm('반납을 확인하시겠습니까?')) return;
 
     try {
       await api.put(`/rentals/${rentalId}/complete`);
@@ -89,60 +107,42 @@ const MyRentals = () => {
   };
 
   const RentalCard = ({ rental, isBorrower }) => {
-    // 제품이 삭제된 경우 처리
-    if (!rental.product) {
-      return (
-        <div className="rental-card">
-          <div className="rental-header">
-            <img 
-              src="https://via.placeholder.com/100?text=삭제된+제품"
-              alt="삭제된 제품"
-              className="rental-image"
-            />
-            <div className="rental-info">
-              <h3 style={{ color: '#999' }}>삭제된 제품</h3>
-              <p className="rental-price">
-                {rental.totalPrice.toLocaleString()}원
-              </p>
-              <p className="rental-period">
-                {formatDateTime(rental.startDate, rental.startTime)} ~ 
-                {formatDateTime(rental.endDate, rental.endTime)}
-              </p>
-            </div>
-            {getStatusBadge(rental.status)}
-          </div>
-          <div className="rental-details">
-            <div className="detail-item">
-              <span className="label">{isBorrower ? '대여자' : '빌린 사람'}</span>
-              <span className="value">
-                {isBorrower ? 
-                  (rental.owner ? `${rental.owner.username} (⭐ ${rental.owner.averageRating?.toFixed(1) || '0.0'})` : '알 수 없음') : 
-                  (rental.borrower ? `${rental.borrower.username} (⭐ ${rental.borrower.averageRating?.toFixed(1) || '0.0'})` : '알 수 없음')
-                }
-              </span>
-            </div>
-            <div className="detail-item">
-              <span className="label">만남 장소</span>
-              <span className="value">{rental.meetingLocation || '정보 없음'}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="rental-card">
         <div className="rental-header">
-          <img 
-            src={`http://localhost:5000${rental.product.images[0]}`}
-            alt={rental.product.title}
-            className="rental-image"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/100?text=No+Image';
-            }}
-          />
+          <Link to={`/products/${rental.product.id}`}>
+            <img 
+              src={`http://localhost:5000${rental.product.images[0]}`}
+              alt={rental.product.title}
+              className="rental-image"
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/100?text=No+Image';
+              }}
+              style={{ cursor: 'pointer' }}
+            />
+          </Link>
           <div className="rental-info">
-            <h3>{rental.product.title}</h3>
+            <h3>
+              <Link 
+                to={`/products/${rental.product.id}`} 
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                {rental.product.title}
+              </Link>
+              {rental.status === 'approved' && (
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#10b981', 
+                  marginLeft: '8px',
+                  fontWeight: '600',
+                  padding: '2px 8px',
+                  backgroundColor: '#d1fae5',
+                  borderRadius: '4px'
+                }}>
+                  예약 확정
+                </span>
+              )}
+            </h3>
             <p className="rental-price">
               {rental.totalPrice.toLocaleString()}원
             </p>
@@ -170,40 +170,74 @@ const MyRentals = () => {
           </div>
         </div>
 
-        <div className="rental-actions">
-          {!isBorrower && rental.status === 'pending' && (
-            <button 
-              onClick={() => handleApprove(rental._id)}
-              className="btn btn-primary"
-            >
-              승인
-            </button>
-          )}
-          
-          {!isBorrower && rental.status === 'ongoing' && (
-            <button 
-              onClick={() => handleComplete(rental._id)}
-              className="btn btn-primary"
-            >
-              완료 처리
-            </button>
-          )}
+        {/* 과거 대여(완료/취소)에서는 액션 버튼 표시 안함 */}
+        {rental.status !== 'completed' && rental.status !== 'cancelled' && (
+          <div className="rental-actions">
+            {/* 빌려주는 사람: pending에서 승인 */}
+            {!isBorrower && rental.status === 'pending' && (
+              <button 
+                onClick={() => handleApprove(rental._id)}
+                className="btn btn-primary"
+              >
+                승인
+              </button>
+            )}
+            
+            {/* 빌려주는 사람: returning 상태에서 반납 확인 */}
+            {!isBorrower && rental.status === 'returning' && (
+              <button 
+                onClick={() => handleComplete(rental._id)}
+                className="btn btn-primary"
+              >
+                ✅ 반납 확인
+              </button>
+            )}
 
-          {rental.status !== 'completed' && rental.status !== 'cancelled' && (
-            <button 
-              onClick={() => handleCancel(rental._id)}
-              className="btn btn-danger"
-            >
-              취소
-            </button>
-          )}
+            {/* 빌리는 사람: approved 또는 ongoing에서 반납 요청 */}
+            {isBorrower && (rental.status === 'approved' || rental.status === 'ongoing') && (
+              <button 
+                onClick={() => handleReturn(rental._id)}
+                className="btn btn-success"
+              >
+                📦 반납하기
+              </button>
+            )}
 
-          {rental.status === 'completed' && (
-            <button className="btn btn-outline">
-              리뷰 작성
-            </button>
-          )}
-        </div>
+            {/* 빌리는 사람: returning 상태에서는 대기 메시지 */}
+            {isBorrower && rental.status === 'returning' && (
+              <div style={{ 
+                padding: '10px', 
+                backgroundColor: '#fff3cd', 
+                borderRadius: '8px',
+                color: '#856404',
+                fontSize: '14px',
+                textAlign: 'center'
+              }}>
+                ⏳ 빌려준 사람의 반납 확인을 기다리는 중입니다
+              </div>
+            )}
+
+            {/* 빌리는 사람: pending에서만 취소 가능 */}
+            {isBorrower && rental.status === 'pending' && (
+              <button 
+                onClick={() => handleCancel(rental._id)}
+                className="btn btn-danger"
+              >
+                취소
+              </button>
+            )}
+
+            {/* 빌려주는 사람: pending, approved에서 취소 가능 */}
+            {!isBorrower && (rental.status === 'pending' || rental.status === 'approved') && (
+              <button 
+                onClick={() => handleCancel(rental._id)}
+                className="btn btn-danger"
+              >
+                취소
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -216,7 +250,13 @@ const MyRentals = () => {
     );
   }
 
-  const currentRentals = activeTab === 'borrowed' ? borrowedRentals : rentedRentals;
+  const getCurrentRentals = () => {
+    if (activeTab === 'borrowed') return borrowedRentals;
+    if (activeTab === 'rented') return rentedRentals;
+    return historyRentals;
+  };
+
+  const currentRentals = getCurrentRentals();
 
   return (
     <div className="my-rentals-page">
@@ -235,6 +275,12 @@ const MyRentals = () => {
         >
           내가 빌려준 것 ({rentedRentals.length})
         </button>
+        <button
+          className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          과거 대여 ({historyRentals.length})
+        </button>
       </div>
 
       <div className="rentals-content">
@@ -247,13 +293,20 @@ const MyRentals = () => {
           </div>
         ) : (
           <div className="rentals-list">
-            {currentRentals.map(rental => (
-              <RentalCard 
-                key={rental._id} 
-                rental={rental} 
-                isBorrower={activeTab === 'borrowed'}
-              />
-            ))}
+            {currentRentals.map(rental => {
+              // history 탭에서는 borrower 정보로 빌린 사람인지 판단
+              const isBorrower = activeTab === 'history' 
+                ? rental.borrower && rental.borrower.id === user?.id
+                : activeTab === 'borrowed';
+              
+              return (
+                <RentalCard 
+                  key={rental._id} 
+                  rental={rental} 
+                  isBorrower={isBorrower}
+                />
+              );
+            })}
           </div>
         )}
       </div>

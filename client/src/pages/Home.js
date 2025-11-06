@@ -5,7 +5,12 @@ import './Home.css';
 
 const CATEGORIES = [
   '전체', '전자기기', '생활가전', '스포츠/레저', '캠핑용품', 
-  '공구', '육아용품', '책/교육', '의류/패션', '기타'
+  '공구', '육아용품', '책/교육', '의류/패션', '악기', '여행', '기타'
+];
+
+const REGIONS = [
+  '전체', '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+  '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'
 ];
 
 const Home = () => {
@@ -13,11 +18,13 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('전체');
+  const [region, setRegion] = useState('전체');
   const [sortBy, setSortBy] = useState('latest');
 
   useEffect(() => {
     loadProducts();
-  }, [category, sortBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, region, sortBy]);
 
   const loadProducts = async () => {
     try {
@@ -25,6 +32,7 @@ const Home = () => {
       const params = {};
       
       if (category !== '전체') params.category = category;
+      if (region !== '전체') params.region = region;
       if (sortBy) params.sort = sortBy;
 
       const response = await api.get('/products', { params });
@@ -42,6 +50,7 @@ const Home = () => {
       setLoading(true);
       const params = { search };
       if (category !== '전체') params.category = category;
+      if (region !== '전체') params.region = region;
       if (sortBy) params.sort = sortBy;
 
       const response = await api.get('/products', { params });
@@ -61,6 +70,15 @@ const Home = () => {
       </div>
 
       <form onSubmit={handleSearch} className="search-bar">
+        <select 
+          value={region} 
+          onChange={(e) => setRegion(e.target.value)}
+          className="region-select"
+        >
+          {REGIONS.map(reg => (
+            <option key={reg} value={reg}>{reg}</option>
+          ))}
+        </select>
         <input
           type="text"
           placeholder="어떤 물품을 찾으시나요?"

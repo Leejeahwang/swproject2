@@ -12,7 +12,8 @@ db.defaults({
   products: [],
   rentals: [],
   reviews: [],
-  chats: []
+  chats: [],
+  notifications: []
 }).write();
 
 module.exports = db;

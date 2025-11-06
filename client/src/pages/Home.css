@@ -21,8 +21,24 @@
 .search-bar {
   display: flex;
   gap: 10px;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto 30px;
+}
+
+.region-select {
+  min-width: 120px;
+  padding: 14px 16px;
+  border: 2px solid #ddd;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.region-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .search-input {
@@ -108,6 +124,10 @@
 
   .search-bar {
     flex-direction: column;
+  }
+
+  .region-select {
+    width: 100%;
   }
 
   .filters {

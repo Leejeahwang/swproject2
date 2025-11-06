@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
+const { createNotification } = require('./notifications');
 
 // 날짜 범위가 겹치는지 확인하는 함수
 const isDateRangeOverlap = (start1, end1, start2, end2) => {
@@ -85,29 +86,14 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
-    // 대여 기간 계산 (시간 포함)
+    // 대여 기간 계산 (일 단위)
     const start = new Date(startDateTime);
     const end = new Date(endDateTime);
     const hours = Math.ceil((end - start) / (1000 * 60 * 60));
     const days = Math.ceil(hours / 24);
     
-    let totalPrice;
-    switch(product.priceUnit) {
-      case '시간':
-        totalPrice = product.price * hours;
-        break;
-      case '일':
-        totalPrice = product.price * days;
-        break;
-      case '주':
-        totalPrice = product.price * Math.ceil(days / 7);
-        break;
-      case '월':
-        totalPrice = product.price * Math.ceil(days / 30);
-        break;
-      default:
-        totalPrice = product.price * days;
-    }
+    // 일 단위로만 계산
+    const totalPrice = product.price * days;
 
     const rentalId = uuidv4();
     const rental = {
@@ -132,6 +118,14 @@ router.post('/', protect, async (req, res) => {
     };
 
     db.get('rentals').push(rental).write();
+
+    // 대여 신청 알림 생성 - 물품 소유자에게
+    createNotification(
+      product.owner,
+      'rental',
+      `${req.user.username}님이 "${product.title}" 대여를 신청했습니다`,
+      `/my-rentals`
+    );
 
     // 관련 정보 추가해서 반환
     const owner = db.get('users').find({ id: rental.owner }).value();
@@ -175,11 +169,11 @@ router.post('/', protect, async (req, res) => {
 router.get('/my-rentals', protect, async (req, res) => {
   try {
     let rentals = db.get('rentals')
-      .filter({ borrower: req.user.id })
+      .filter(r => r.borrower === req.user.id && r.status !== 'completed' && r.status !== 'cancelled')
       .orderBy(['createdAt'], ['desc'])
       .value();
 
-    // 관련 정보 추가
+    // 관련 정보 추가 및 삭제된 제품 필터링
     rentals = rentals.map(rental => {
       const product = db.get('products').find({ id: rental.product }).value();
       const owner = db.get('users').find({ id: rental.owner }).value();
@@ -201,7 +195,7 @@ router.get('/my-rentals', protect, async (req, res) => {
           profileImage: owner.profileImage
         } : null
       };
-    });
+    }).filter(rental => rental.product !== null); // 삭제된 제품 제외
 
     res.json({ success: true, rentals });
   } catch (error) {
@@ -215,11 +209,11 @@ router.get('/my-rentals', protect, async (req, res) => {
 router.get('/my-listings', protect, async (req, res) => {
   try {
     let rentals = db.get('rentals')
-      .filter({ owner: req.user.id })
+      .filter(r => r.owner === req.user.id && r.status !== 'completed' && r.status !== 'cancelled')
       .orderBy(['createdAt'], ['desc'])
       .value();
 
-    // 관련 정보 추가
+    // 관련 정보 추가 및 삭제된 제품 필터링
     rentals = rentals.map(rental => {
       const product = db.get('products').find({ id: rental.product }).value();
       const borrower = db.get('users').find({ id: rental.borrower }).value();
@@ -241,11 +235,62 @@ router.get('/my-listings', protect, async (req, res) => {
           profileImage: borrower.profileImage
         } : null
       };
-    });
+    }).filter(rental => rental.product !== null); // 삭제된 제품 제외
 
     res.json({ success: true, rentals });
   } catch (error) {
     res.status(500).json({ message: '대여 목록 조회 실패', error: error.message });
+  }
+});
+
+// @route   GET /api/rentals/history
+// @desc    과거 대여 목록 (완료/취소된 내역)
+// @access  Private
+router.get('/history', protect, async (req, res) => {
+  try {
+    let rentals = db.get('rentals')
+      .filter(r => 
+        (r.borrower === req.user.id || r.owner === req.user.id) && 
+        (r.status === 'completed' || r.status === 'cancelled')
+      )
+      .orderBy(['updatedAt'], ['desc'])
+      .value();
+
+    // 관련 정보 추가 및 삭제된 제품 필터링
+    rentals = rentals.map(rental => {
+      const product = db.get('products').find({ id: rental.product }).value();
+      const owner = db.get('users').find({ id: rental.owner }).value();
+      const borrower = db.get('users').find({ id: rental.borrower }).value();
+      
+      return {
+        ...rental,
+        product: product ? {
+          id: product.id,
+          title: product.title,
+          images: product.images,
+          price: product.price,
+          priceUnit: product.priceUnit
+        } : null,
+        owner: owner ? {
+          id: owner.id,
+          username: owner.username,
+          phone: owner.phone,
+          averageRating: owner.averageRating || 0,
+          profileImage: owner.profileImage
+        } : null,
+        borrower: borrower ? {
+          id: borrower.id,
+          username: borrower.username,
+          phone: borrower.phone,
+          averageRating: borrower.averageRating || 0,
+          profileImage: borrower.profileImage
+        } : null
+      };
+    }).filter(rental => rental.product !== null); // 삭제된 제품 제외
+
+    res.json({ success: true, rentals });
+  } catch (error) {
+    res.status(500).json({ message: '과거 대여 목록 조회 실패', error: error.message });
   }
 });
 
@@ -351,6 +396,16 @@ router.put('/:id/approve', protect, async (req, res) => {
       .write();
 
     const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    
+    // 대여 확정 알림 생성 - 빌린 사람에게
+    const product = db.get('products').find({ id: rental.product }).value();
+    createNotification(
+      rental.borrower,
+      'rental',
+      `"${product ? product.title : '물품'}" 대여가 확정되었습니다`,
+      `/my-rentals`
+    );
+    
     res.json({ success: true, rental: updatedRental });
   } catch (error) {
     res.status(500).json({ message: '대여 승인 실패', error: error.message });
@@ -387,8 +442,54 @@ router.put('/:id/start', protect, async (req, res) => {
   }
 });
 
+// @route   PUT /api/rentals/:id/return
+// @desc    반납 요청 (빌린 사람)
+// @access  Private
+router.put('/:id/return', protect, async (req, res) => {
+  try {
+    const rental = db.get('rentals').find({ id: req.params.id }).value();
+
+    if (!rental) {
+      return res.status(404).json({ message: '대여 정보를 찾을 수 없습니다' });
+    }
+
+    // 빌린 사람만 반납 요청 가능
+    if (rental.borrower !== req.user.id) {
+      return res.status(403).json({ message: '반납 권한이 없습니다' });
+    }
+
+    // approved 또는 ongoing 상태에서 반납 가능
+    if (rental.status !== 'ongoing' && rental.status !== 'approved') {
+      return res.status(400).json({ message: '승인된 대여 또는 진행 중인 대여만 반납할 수 있습니다' });
+    }
+
+    db.get('rentals')
+      .find({ id: req.params.id })
+      .assign({ 
+        status: 'returning',
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+
+    const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    
+    // 반납 요청 알림 생성 - 빌려준 사람에게
+    const product = db.get('products').find({ id: rental.product }).value();
+    createNotification(
+      rental.owner,
+      'rental',
+      `"${product ? product.title : '물품'}" 반납 확인 요청이 왔습니다`,
+      `/my-rentals`
+    );
+    
+    res.json({ success: true, rental: updatedRental });
+  } catch (error) {
+    res.status(500).json({ message: '반납 요청 실패', error: error.message });
+  }
+});
+
 // @route   PUT /api/rentals/:id/complete
-// @desc    대여 완료
+// @desc    반납 확인 및 대여 완료 (빌려준 사람)
 // @access  Private
 router.put('/:id/complete', protect, async (req, res) => {
   try {
@@ -398,12 +499,14 @@ router.put('/:id/complete', protect, async (req, res) => {
       return res.status(404).json({ message: '대여 정보를 찾을 수 없습니다' });
     }
 
+    // 빌려주는 사람만 반납 확인 가능
     if (rental.owner !== req.user.id) {
-      return res.status(403).json({ message: '완료 처리 권한이 없습니다' });
+      return res.status(403).json({ message: '반납 확인 권한이 없습니다' });
     }
 
-    if (rental.status !== 'ongoing') {
-      return res.status(400).json({ message: '진행 중인 대여만 완료할 수 있습니다' });
+    // returning 상태에서만 완료 가능
+    if (rental.status !== 'returning') {
+      return res.status(400).json({ message: '반납 대기 중인 대여만 완료할 수 있습니다' });
     }
 
     db.get('rentals')
@@ -433,6 +536,16 @@ router.put('/:id/complete', protect, async (req, res) => {
     }
 
     const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    
+    // 반납 완료 알림 생성 - 빌린 사람에게
+    const product = db.get('products').find({ id: rental.product }).value();
+    createNotification(
+      rental.borrower,
+      'rental',
+      `"${product ? product.title : '물품'}" 반납이 완료되었습니다`,
+      `/my-rentals`
+    );
+    
     res.json({ success: true, rental: updatedRental });
   } catch (error) {
     res.status(500).json({ message: '대여 완료 처리 실패', error: error.message });
@@ -456,6 +569,15 @@ router.put('/:id/cancel', protect, async (req, res) => {
 
     if (rental.status === 'completed') {
       return res.status(400).json({ message: '완료된 대여는 취소할 수 없습니다' });
+    }
+
+    if (rental.status === 'ongoing') {
+      return res.status(400).json({ message: '진행 중인 대여는 취소할 수 없습니다' });
+    }
+
+    // 빌린 사람(borrower)은 pending 상태에서만 취소 가능
+    if (rental.borrower === req.user.id && rental.status !== 'pending') {
+      return res.status(400).json({ message: '예약이 확정된 대여는 취소할 수 없습니다' });
     }
 
     db.get('rentals')

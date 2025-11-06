@@ -43,6 +43,7 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/rentals', require('./routes/rentals'));
 app.use('/api/chats', require('./routes/chats'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Socket.io 채팅 기능
 const chatNamespace = io.of('/chat');
@@ -57,7 +58,7 @@ chatNamespace.on('connection', (socket) => {
 
   // 메시지 전송
   socket.on('send_message', (data) => {
-    const { roomId, message, senderId } = data;
+    const { roomId, message, senderId, senderName } = data;
     
     // 메시지를 DB에 저장
     const newMessage = {
@@ -106,6 +107,23 @@ chatNamespace.on('connection', (socket) => {
         lastMessageAt: new Date().toISOString()
       })
       .write();
+    
+    // 채팅 알림 생성 - 상대방에게
+    const { createNotification } = require('./routes/notifications');
+    const participants = chat.participants;
+    const receiverId = participants.find(id => id !== senderId);
+    
+    if (receiverId) {
+      const sender = db.get('users').find({ id: senderId }).value();
+      const senderUsername = sender ? sender.username : (senderName || '알 수 없음');
+      
+      createNotification(
+        receiverId,
+        'chat',
+        `${senderUsername}님이 메시지를 보냈습니다: ${message.substring(0, 30)}${message.length > 30 ? '...' : ''}`,
+        `/chats/${roomId}`
+      );
+    }
     
     // 같은 방의 모든 사용자에게 메시지 전송
     chatNamespace.to(roomId).emit('receive_message', {

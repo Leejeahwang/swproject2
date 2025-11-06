@@ -73,7 +73,8 @@ const ChatRoom = () => {
     const messageData = {
       roomId,
       message: newMessage,
-      senderId: user.id
+      senderId: user.id,
+      senderName: user.username
     };
 
     socket.emit('send_message', messageData);

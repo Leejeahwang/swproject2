@@ -17,6 +17,7 @@ import MyProducts from './pages/MyProducts';
 import MyRentals from './pages/MyRentals';
 import ChatList from './pages/ChatList';
 import ChatRoom from './pages/ChatRoom';
+import Notifications from './pages/Notifications';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -72,6 +73,12 @@ function App() {
               <Route path="/chats/:roomId" element={
                 <PrivateRoute>
                   <ChatRoom />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/notifications" element={
+                <PrivateRoute>
+                  <Notifications />
                 </PrivateRoute>
               } />
             </Routes>

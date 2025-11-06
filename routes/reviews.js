@@ -168,6 +168,53 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// @route   GET /api/reviews/product/:productId
+// @desc    특정 제품의 리뷰 목록
+// @access  Public
+router.get('/product/:productId', async (req, res) => {
+  try {
+    let reviews = db.get('reviews')
+      .filter({ product: req.params.productId })
+      .orderBy(['createdAt'], ['desc'])
+      .value();
+
+    // 관련 정보 추가
+    reviews = reviews.map(review => {
+      const reviewer = db.get('users').find({ id: review.reviewer }).value();
+      const reviewee = db.get('users').find({ id: review.reviewee }).value();
+      
+      return {
+        ...review,
+        reviewer: reviewer ? {
+          id: reviewer.id,
+          username: reviewer.username,
+          profileImage: reviewer.profileImage,
+          averageRating: reviewer.averageRating || 0
+        } : null,
+        reviewee: reviewee ? {
+          id: reviewee.id,
+          username: reviewee.username,
+          averageRating: reviewee.averageRating || 0
+        } : null
+      };
+    });
+
+    // 평균 평점 계산
+    const averageRating = reviews.length > 0
+      ? reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length
+      : 0;
+
+    res.json({ 
+      success: true, 
+      reviews,
+      averageRating,
+      totalReviews: reviews.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: '리뷰 조회 실패', error: error.message });
+  }
+});
+
 // @route   GET /api/reviews/rental/:rentalId
 // @desc    특정 대여의 리뷰 조회
 // @access  Private

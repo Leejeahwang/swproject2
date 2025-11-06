@@ -16,6 +16,8 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [reservedDates, setReservedDates] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
 
   // 대여 요청 모달 상태
   const [showRentalModal, setShowRentalModal] = useState(false);
@@ -30,6 +32,7 @@ const ProductDetail = () => {
   useEffect(() => {
     loadProduct();
     loadReservedDates();
+    loadReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -61,6 +64,19 @@ const ProductDetail = () => {
     }
   };
 
+  const loadReviews = async () => {
+    try {
+      const response = await api.get(`/reviews/product/${id}`);
+      setReviews(response.data.reviews || []);
+      setReviewStats({
+        averageRating: response.data.averageRating || 0,
+        totalReviews: response.data.totalReviews || 0
+      });
+    } catch (error) {
+      console.error('리뷰 로드 실패:', error);
+    }
+  };
+
   // 날짜가 예약된 범위에 포함되는지 확인
   const isDateReserved = (date) => {
     const checkDate = new Date(date);
@@ -74,6 +90,19 @@ const ProductDetail = () => {
       
       return checkDate >= start && checkDate <= end;
     });
+  };
+
+  // 별점 렌더링 함수
+  const renderStars = (rating) => {
+    return (
+      <div className="stars">
+        {[1, 2, 3, 4, 5].map(star => (
+          <span key={star} className={star <= rating ? 'star filled' : 'star'}>
+            ⭐
+          </span>
+        ))}
+      </div>
+    );
   };
 
   const handleLike = async () => {
@@ -328,6 +357,60 @@ const ProductDetail = () => {
       <div className="description-section">
         <h2>제품 설명</h2>
         <p className="description">{product.description}</p>
+      </div>
+
+      {/* 리뷰 섹션 */}
+      <div className="reviews-section">
+        <div className="reviews-header">
+          <h2>⭐ 제품 리뷰 ({reviewStats.totalReviews})</h2>
+          {reviewStats.totalReviews > 0 && (
+            <div className="review-summary">
+              <span className="average-rating">{reviewStats.averageRating.toFixed(1)}</span>
+              {renderStars(Math.round(reviewStats.averageRating))}
+              <span className="review-count">({reviewStats.totalReviews}개 리뷰)</span>
+            </div>
+          )}
+        </div>
+
+        {reviews.length === 0 ? (
+          <div className="no-reviews">
+            <p>아직 작성된 리뷰가 없습니다.</p>
+            <p className="no-reviews-sub">첫 번째 리뷰를 남겨보세요!</p>
+          </div>
+        ) : (
+          <div className="reviews-list">
+            {reviews.map(review => (
+              <div key={review.id} className="review-card">
+                <div className="review-header">
+                  <div className="reviewer-info">
+                    <Link to={`/profile/${review.reviewer.id}`} className="reviewer-name">
+                      {review.reviewer.username}
+                    </Link>
+                    <span className="reviewer-rating">
+                      ⭐ {(review.reviewer.averageRating || 0).toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="review-rating-date">
+                    {renderStars(review.rating)}
+                    <span className="review-date">
+                      {new Date(review.createdAt).toLocaleDateString('ko-KR')}
+                    </span>
+                  </div>
+                </div>
+                {review.comment && (
+                  <p className="review-comment">{review.comment}</p>
+                )}
+                {review.reviewee && (
+                  <div className="review-about">
+                    <Link to={`/profile/${review.reviewee.id}`} className="reviewee-link">
+                      {review.reviewee.username}님에 대한 리뷰
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {recommendedProducts.length > 0 && (

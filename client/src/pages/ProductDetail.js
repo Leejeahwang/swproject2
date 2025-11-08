@@ -26,7 +26,9 @@ const ProductDetail = () => {
     startTime: '09:00',
     endDate: '',
     endTime: '18:00',
-    meetingLocation: ''
+    meetingLocation: '',
+    borrowerSafePay: false,
+    insurance: 'none'
   });
 
   useEffect(() => {
@@ -130,6 +132,46 @@ const ProductDetail = () => {
     return s1 <= e2 && s2 <= e1;
   };
 
+  // 최종 금액 계산
+  const calculateTotalPrice = () => {
+    if (!product || !rentalData.startDate || !rentalData.endDate) return { rentalPrice: 0, fees: 0, total: 0 };
+
+    const startDateTime = new Date(`${rentalData.startDate}T${rentalData.startTime}:00`);
+    const endDateTime = new Date(`${rentalData.endDate}T${rentalData.endTime}:00`);
+    const hours = Math.ceil((endDateTime - startDateTime) / (1000 * 60 * 60));
+    const days = Math.ceil(hours / 24);
+
+    const rentalPrice = product.price * days;
+    let safePayFee = 0;
+    let insuranceFee = 0;
+
+    // 안심결제 수수료
+    if (rentalData.borrowerSafePay) {
+      safePayFee = Math.round(rentalPrice * 0.03);
+    }
+
+    // 보험 수수료
+    if (rentalData.insurance === 'basic') {
+      insuranceFee = Math.round(rentalPrice * 0.10);
+    } else if (rentalData.insurance === 'premium') {
+      insuranceFee = Math.round(rentalPrice * 0.15);
+    } else if (rentalData.insurance === 'luxury') {
+      insuranceFee = Math.round(rentalPrice * 0.20);
+    }
+
+    const totalFees = safePayFee + insuranceFee;
+    const totalPrice = rentalPrice + totalFees;
+
+    return {
+      rentalPrice,
+      safePayFee,
+      insuranceFee,
+      totalFees,
+      totalPrice,
+      days
+    };
+  };
+
   const handleRentalRequest = async (e) => {
     e.preventDefault();
     
@@ -166,7 +208,9 @@ const ProductDetail = () => {
         startTime: '09:00',
         endDate: '', 
         endTime: '18:00',
-        meetingLocation: '' 
+        meetingLocation: '',
+        borrowerSafePay: false,
+        insurance: 'none'
       });
       loadReservedDates(); // 예약 목록 새로고침
       navigate('/my-rentals');
@@ -497,6 +541,65 @@ const ProductDetail = () => {
                   placeholder="만남 장소를 입력하세요"
                 />
               </div>
+
+              <div className="payment-options">
+                <h4>결제 옵션</h4>
+                
+                <div className="form-group-checkbox">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={rentalData.borrowerSafePay}
+                      onChange={(e) => setRentalData({...rentalData, borrowerSafePay: e.target.checked})}
+                    />
+                    <div>
+                      <strong>안심결제 (선택)</strong>
+                      <p className="option-description">가짜 물품 받으면 전액 환불 보장 (수수료: 렌탈료의 3%)</p>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="form-group">
+                  <label>보험 선택</label>
+                  <select
+                    value={rentalData.insurance}
+                    onChange={(e) => setRentalData({...rentalData, insurance: e.target.value})}
+                  >
+                    <option value="none">보험 없음</option>
+                    <option value="basic">기본형 (10%) - 최대 10만원 보상</option>
+                    <option value="premium">프리미엄 (15%) - 최대 50만원 보상</option>
+                    <option value="luxury">고급형 (20%) - 최대 200만원 보상</option>
+                  </select>
+                  <p className="option-description">파손/분실 시 보상</p>
+                </div>
+
+                {rentalData.startDate && rentalData.endDate && (
+                  <div className="price-summary">
+                    <h4>결제 예정 금액</h4>
+                    <div className="price-detail">
+                      <span>렌탈 가격 ({calculateTotalPrice().days}일)</span>
+                      <span>{calculateTotalPrice().rentalPrice.toLocaleString()}원</span>
+                    </div>
+                    {rentalData.borrowerSafePay && (
+                      <div className="price-detail">
+                        <span>안심결제 수수료 (3%)</span>
+                        <span>{calculateTotalPrice().safePayFee.toLocaleString()}원</span>
+                      </div>
+                    )}
+                    {rentalData.insurance !== 'none' && (
+                      <div className="price-detail">
+                        <span>보험료 ({rentalData.insurance === 'basic' ? '10' : rentalData.insurance === 'premium' ? '15' : '20'}%)</span>
+                        <span>{calculateTotalPrice().insuranceFee.toLocaleString()}원</span>
+                      </div>
+                    )}
+                    <div className="price-total">
+                      <strong>총 결제 금액</strong>
+                      <strong>{calculateTotalPrice().totalPrice.toLocaleString()}원</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="modal-actions">
                 <button type="submit" className="btn btn-primary">요청하기</button>
                 <button 

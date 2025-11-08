@@ -19,6 +19,9 @@ const MyRentals = () => {
     rating: 5,
     comment: ''
   });
+  
+  // 빌려주는 사람의 안심결제 옵션 상태 (각 대여 ID별로 관리)
+  const [ownerSafePayOptions, setOwnerSafePayOptions] = useState({});
 
   useEffect(() => {
     loadRentals();
@@ -69,13 +72,28 @@ const MyRentals = () => {
   const handleApprove = async (rentalId) => {
     if (!window.confirm('대여를 승인하시겠습니까?')) return;
 
+    const ownerSafePay = ownerSafePayOptions[rentalId] || false;
+
     try {
-      await api.put(`/rentals/${rentalId}/approve`);
-      alert('대여가 승인되었습니다');
+      await api.put(`/rentals/${rentalId}/approve`, { ownerSafePay });
+      alert(`대여가 승인되었습니다${ownerSafePay ? '\n(안심결제 서비스 적용)' : '\n(일반 승인)'}`);
       loadRentals();
+      // 체크박스 상태 초기화
+      setOwnerSafePayOptions(prev => {
+        const updated = { ...prev };
+        delete updated[rentalId];
+        return updated;
+      });
     } catch (error) {
       alert(error.response?.data?.message || '승인 실패');
     }
+  };
+
+  const handleOwnerSafePayToggle = (rentalId, checked) => {
+    setOwnerSafePayOptions(prev => ({
+      ...prev,
+      [rentalId]: checked
+    }));
   };
 
   const handleReturn = async (rentalId) => {
@@ -90,12 +108,28 @@ const MyRentals = () => {
     }
   };
 
+  const handlePay = async (rentalId) => {
+    const rental = borrowedRentals.find(r => r.id === rentalId);
+    if (!rental) return;
+
+    const confirmMsg = `결제하시겠습니까?\n\n총 결제 금액: ${(rental.totalAmount || 0).toLocaleString()}원`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await api.put(`/rentals/${rentalId}/pay`);
+      alert('결제가 완료되었습니다!\n대여가 시작되었습니다.');
+      loadRentals();
+    } catch (error) {
+      alert(error.response?.data?.message || '결제 실패');
+    }
+  };
+
   const handleComplete = async (rentalId) => {
     if (!window.confirm('반납을 확인하시겠습니까?')) return;
 
     try {
-      await api.put(`/rentals/${rentalId}/complete`);
-      alert('대여가 완료되었습니다');
+      const response = await api.put(`/rentals/${rentalId}/complete`);
+      alert(response.data?.message || '대여가 완료되었습니다');
       loadRentals();
     } catch (error) {
       alert(error.response?.data?.message || '완료 처리 실패');
@@ -181,7 +215,7 @@ const MyRentals = () => {
               )}
             </h3>
             <p className="rental-price">
-              {rental.totalPrice.toLocaleString()}원
+              {(rental.totalAmount || rental.totalPrice || rental.rentalPrice || 0).toLocaleString()}원
             </p>
             <p className="rental-period">
               {formatDateTime(rental.startDate, rental.startTime)} ~ 
@@ -205,6 +239,20 @@ const MyRentals = () => {
             <span className="label">만남 장소</span>
             <span className="value">{rental.meetingLocation}</span>
           </div>
+          {/* 빌려주는 사람에게 수령 금액 표시 */}
+          {!isBorrower && rental.ownerAmount !== undefined && rental.status !== 'pending' && (
+            <div className="detail-item">
+              <span className="label">수령 예정 금액</span>
+              <span className="value" style={{ color: '#10b981', fontWeight: 'bold' }}>
+                {rental.ownerAmount.toLocaleString()}원
+                {rental.ownerSafePay && (
+                  <span style={{ fontSize: '0.85rem', color: '#666', marginLeft: '5px' }}>
+                    (안심결제 적용)
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 완료된 대여에서는 리뷰 작성 버튼 표시 */}
@@ -246,12 +294,50 @@ const MyRentals = () => {
           <div className="rental-actions">
             {/* 빌려주는 사람: pending에서 승인 */}
             {!isBorrower && rental.status === 'pending' && (
-              <button 
-                onClick={() => handleApprove(rental._id)}
-                className="btn btn-primary"
-              >
-                승인
-              </button>
+              <>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px',
+                  padding: '10px',
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: '8px',
+                  marginBottom: '10px'
+                }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    gap: '8px'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={ownerSafePayOptions[rental._id] || false}
+                      onChange={(e) => handleOwnerSafePayToggle(rental._id, e.target.checked)}
+                      style={{ 
+                        width: '18px', 
+                        height: '18px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <span style={{ fontWeight: '500' }}>안심결제 서비스 이용</span>
+                  </label>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: '#6b7280',
+                    marginLeft: 'auto'
+                  }}>
+                    수수료 3% (물품 바꿔치기 보상)
+                  </span>
+                </div>
+                <button 
+                  onClick={() => handleApprove(rental._id)}
+                  className="btn btn-primary"
+                >
+                  승인
+                </button>
+              </>
             )}
             
             {/* 빌려주는 사람: returning 상태에서 반납 확인 */}
@@ -264,8 +350,19 @@ const MyRentals = () => {
               </button>
             )}
 
-            {/* 빌리는 사람: approved 또는 ongoing에서 반납 요청 */}
-            {isBorrower && (rental.status === 'approved' || rental.status === 'ongoing') && (
+            {/* 빌리는 사람: approved 상태에서 결제 대기 */}
+            {isBorrower && rental.status === 'approved' && rental.paymentStatus === 'pending' && (
+              <button 
+                onClick={() => handlePay(rental._id)}
+                className="btn btn-primary"
+                style={{ fontWeight: 'bold' }}
+              >
+                💳 결제하기
+              </button>
+            )}
+
+            {/* 빌리는 사람: ongoing에서 반납 요청 */}
+            {isBorrower && rental.status === 'ongoing' && (
               <button 
                 onClick={() => handleReturn(rental._id)}
                 className="btn btn-success"
@@ -298,14 +395,44 @@ const MyRentals = () => {
               </button>
             )}
 
-            {/* 빌려주는 사람: pending, approved에서 취소 가능 */}
-            {!isBorrower && (rental.status === 'pending' || rental.status === 'approved') && (
+            {/* 빌려주는 사람: pending에서만 취소 가능 */}
+            {!isBorrower && rental.status === 'pending' && (
               <button 
                 onClick={() => handleCancel(rental._id)}
                 className="btn btn-danger"
               >
                 취소
               </button>
+            )}
+
+            {/* 빌려주는 사람: approved 상태에서 결제 대기중 표시 */}
+            {!isBorrower && rental.status === 'approved' && rental.paymentStatus === 'pending' && (
+              <div style={{ 
+                padding: '10px', 
+                backgroundColor: '#fff3e0', 
+                borderRadius: '8px',
+                color: '#e65100',
+                fontSize: '14px',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                ⏳ 결제 대기중
+              </div>
+            )}
+
+            {/* 빌려주는 사람: ongoing 상태에서는 대여중 표시 */}
+            {!isBorrower && rental.status === 'ongoing' && (
+              <div style={{ 
+                padding: '10px', 
+                backgroundColor: '#e3f2fd', 
+                borderRadius: '8px',
+                color: '#1565c0',
+                fontSize: '14px',
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                🔄 대여 진행 중
+              </div>
             )}
           </div>
         )}

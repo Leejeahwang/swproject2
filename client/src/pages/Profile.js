@@ -79,6 +79,12 @@ const Profile = () => {
                 <span className="stat-label">빌린 횟수</span>
                 <span className="stat-value">{user.borrowCount}회</span>
               </div>
+              <div className="stat-item">
+                <span className="stat-label">총 수익</span>
+                <span className="stat-value earnings">
+                  💰 {(user.totalEarnings || 0).toLocaleString()}원
+                </span>
+              </div>
             </div>
             <div className="profile-region">
               📍 {user.primaryRegion}

@@ -52,7 +52,16 @@ router.get('/product/:productId/reserved-dates', async (req, res) => {
 // @access  Private
 router.post('/', protect, async (req, res) => {
   try {
-    const { productId, startDate, startTime, endDate, endTime, meetingLocation } = req.body;
+    const { 
+      productId, 
+      startDate, 
+      startTime, 
+      endDate, 
+      endTime, 
+      meetingLocation,
+      borrowerSafePay,
+      insurance
+    } = req.body;
 
     const product = db.get('products').find({ id: productId }).value();
     
@@ -92,13 +101,39 @@ router.post('/', protect, async (req, res) => {
     const hours = Math.ceil((end - start) / (1000 * 60 * 60));
     const days = Math.ceil(hours / 24);
     
-    // 일 단위로만 계산
-    const totalPrice = product.price * days;
+    // 기본 렌탈 가격 계산
+    const rentalPrice = product.price * days;
+
+    // 결제 옵션 계산
+    let borrowerSafePayFee = 0;
+    let insuranceFee = 0;
+    let insuranceType = insurance || 'none';
+    let insuranceMaxCoverage = 0;
+
+    // 안심결제 수수료 (빌리는 사람)
+    if (borrowerSafePay) {
+      borrowerSafePayFee = Math.round(rentalPrice * 0.03);
+    }
+
+    // 보험 수수료
+    if (insuranceType === 'basic') {
+      insuranceFee = Math.round(rentalPrice * 0.10);
+      insuranceMaxCoverage = 100000;
+    } else if (insuranceType === 'premium') {
+      insuranceFee = Math.round(rentalPrice * 0.15);
+      insuranceMaxCoverage = 500000;
+    } else if (insuranceType === 'luxury') {
+      insuranceFee = Math.round(rentalPrice * 0.20);
+      insuranceMaxCoverage = 2000000;
+    }
+
+    // 총 결제 금액 (빌리는 사람이 결제할 금액)
+    const totalAmount = rentalPrice + borrowerSafePayFee + insuranceFee;
 
     const rentalId = uuidv4();
     const rental = {
       id: rentalId,
-      _id: rentalId,  // 호환성을 위해 동일한 ID 사용
+      _id: rentalId,
       product: productId,
       owner: product.owner,
       borrower: req.user.id,
@@ -108,7 +143,18 @@ router.post('/', protect, async (req, res) => {
       endTime,
       startDateTime,
       endDateTime,
-      totalPrice,
+      rentalPrice,
+      borrowerSafePay: borrowerSafePay || false,
+      borrowerSafePayFee,
+      ownerSafePay: false,
+      ownerSafePayFee: 0,
+      insurance: insuranceType,
+      insuranceFee,
+      insuranceMaxCoverage,
+      totalAmount,
+      platformFee: borrowerSafePayFee + insuranceFee,
+      ownerAmount: 0,
+      paymentStatus: 'pending',
       meetingLocation,
       status: 'pending',
       ownerReviewed: false,
@@ -354,6 +400,7 @@ router.get('/:id', protect, async (req, res) => {
 // @access  Private (Owner only)
 router.put('/:id/approve', protect, async (req, res) => {
   try {
+    const { ownerSafePay } = req.body;
     const rental = db.get('rentals').find({ id: req.params.id }).value();
 
     if (!rental) {
@@ -387,10 +434,24 @@ router.put('/:id/approve', protect, async (req, res) => {
       });
     }
 
+    // 빌려주는 사람의 안심결제 수수료 계산
+    let ownerSafePayFee = 0;
+    if (ownerSafePay) {
+      ownerSafePayFee = Math.round(rental.rentalPrice * 0.03);
+    }
+
+    // 총 플랫폼 수수료 및 빌려주는 사람이 받을 금액 계산
+    const totalPlatformFee = rental.borrowerSafePayFee + rental.insuranceFee + ownerSafePayFee;
+    const ownerReceiveAmount = rental.rentalPrice - ownerSafePayFee;
+
     db.get('rentals')
       .find({ id: req.params.id })
       .assign({ 
         status: 'approved',
+        ownerSafePay: ownerSafePay || false,
+        ownerSafePayFee,
+        platformFee: totalPlatformFee,
+        ownerAmount: ownerReceiveAmount,
         updatedAt: new Date().toISOString()
       })
       .write();
@@ -402,13 +463,60 @@ router.put('/:id/approve', protect, async (req, res) => {
     createNotification(
       rental.borrower,
       'rental',
-      `"${product ? product.title : '물품'}" 대여가 확정되었습니다`,
+      `"${product ? product.title : '물품'}" 대여가 확정되었습니다. 결제를 완료해주세요.`,
       `/my-rentals`
     );
     
     res.json({ success: true, rental: updatedRental });
   } catch (error) {
     res.status(500).json({ message: '대여 승인 실패', error: error.message });
+  }
+});
+
+// @route   PUT /api/rentals/:id/pay
+// @desc    결제 처리 (빌리는 사람)
+// @access  Private
+router.put('/:id/pay', protect, async (req, res) => {
+  try {
+    const rental = db.get('rentals').find({ id: req.params.id }).value();
+
+    if (!rental) {
+      return res.status(404).json({ message: '대여 정보를 찾을 수 없습니다' });
+    }
+
+    // 빌리는 사람만 결제 가능
+    if (rental.borrower !== req.user.id) {
+      return res.status(403).json({ message: '결제 권한이 없습니다' });
+    }
+
+    if (rental.status !== 'approved') {
+      return res.status(400).json({ message: '승인된 대여만 결제할 수 있습니다' });
+    }
+
+    if (rental.paymentStatus === 'paid') {
+      return res.status(400).json({ message: '이미 결제가 완료되었습니다' });
+    }
+
+    // 결제 처리 (실제로는 결제 API 호출이 필요하지만, 여기서는 시뮬레이션)
+    db.get('rentals')
+      .find({ id: req.params.id })
+      .assign({ 
+        paymentStatus: 'paid',
+        paymentDate: Date.now(),
+        status: 'ongoing',
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+
+    const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    
+    res.json({ 
+      success: true, 
+      rental: updatedRental,
+      message: '결제가 완료되었습니다. 대여가 시작되었습니다.'
+    });
+  } catch (error) {
+    res.status(500).json({ message: '결제 처리 실패', error: error.message });
   }
 });
 
@@ -509,29 +617,38 @@ router.put('/:id/complete', protect, async (req, res) => {
       return res.status(400).json({ message: '반납 대기 중인 대여만 완료할 수 있습니다' });
     }
 
+    // 정산 처리
     db.get('rentals')
       .find({ id: req.params.id })
       .assign({ 
         status: 'completed',
+        paymentStatus: 'settled',
+        settledAt: Date.now(),
         updatedAt: new Date().toISOString()
       })
       .write();
 
-    // 사용자 렌탈 횟수 업데이트
+    // 사용자 렌탈 횟수 및 수익 업데이트
     const owner = db.get('users').find({ id: rental.owner }).value();
     const borrower = db.get('users').find({ id: rental.borrower }).value();
 
     if (owner) {
+      const currentEarnings = owner.totalEarnings || 0;
+      const newEarnings = currentEarnings + (rental.ownerAmount || 0);
+      
       db.get('users')
         .find({ id: rental.owner })
-        .assign({ rentalCount: owner.rentalCount + 1 })
+        .assign({ 
+          rentalCount: (owner.rentalCount || 0) + 1,
+          totalEarnings: newEarnings
+        })
         .write();
     }
 
     if (borrower) {
       db.get('users')
         .find({ id: rental.borrower })
-        .assign({ borrowCount: borrower.borrowCount + 1 })
+        .assign({ borrowCount: (borrower.borrowCount || 0) + 1 })
         .write();
     }
 
@@ -546,7 +663,19 @@ router.put('/:id/complete', protect, async (req, res) => {
       `/my-rentals`
     );
     
-    res.json({ success: true, rental: updatedRental });
+    // 정산 완료 알림 생성 - 빌려준 사람에게
+    createNotification(
+      rental.owner,
+      'rental',
+      `"${product ? product.title : '물품'}" 정산이 완료되었습니다. ${(rental.ownerAmount || 0).toLocaleString()}원이 입금되었습니다.`,
+      `/profile`
+    );
+    
+    res.json({ 
+      success: true, 
+      rental: updatedRental,
+      message: `정산이 완료되었습니다. ${(rental.ownerAmount || 0).toLocaleString()}원이 입금되었습니다.`
+    });
   } catch (error) {
     res.status(500).json({ message: '대여 완료 처리 실패', error: error.message });
   }

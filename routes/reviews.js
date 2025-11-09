@@ -169,12 +169,13 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // @route   GET /api/reviews/product/:productId
-// @desc    특정 제품의 리뷰 목록
+// @desc    특정 제품의 리뷰 목록 (빌린 사람이 작성한 리뷰만)
 // @access  Public
 router.get('/product/:productId', async (req, res) => {
   try {
+    // 제품 리뷰는 빌린 사람(type === 'borrower')이 작성한 리뷰만 표시
     let reviews = db.get('reviews')
-      .filter({ product: req.params.productId })
+      .filter({ product: req.params.productId, type: 'borrower' })
       .orderBy(['createdAt'], ['desc'])
       .value();
 

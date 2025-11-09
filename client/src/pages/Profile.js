@@ -51,6 +51,19 @@ const Profile = () => {
     return '⭐'.repeat(Math.round(rating));
   };
 
+  // 리뷰를 타입별로 분리
+  const ownerReviews = reviews.filter(review => review.type === 'borrower'); // 빌려준 사람으로서 받은 리뷰
+  const borrowerReviews = reviews.filter(review => review.type === 'owner'); // 빌린 사람으로서 받은 리뷰
+
+  // 각 타입별 평균 평점 계산
+  const ownerAvgRating = ownerReviews.length > 0
+    ? ownerReviews.reduce((acc, rev) => acc + rev.rating, 0) / ownerReviews.length
+    : 0;
+
+  const borrowerAvgRating = borrowerReviews.length > 0
+    ? borrowerReviews.reduce((acc, rev) => acc + rev.rating, 0) / borrowerReviews.length
+    : 0;
+
   return (
     <div className="profile-page">
       <div className="profile-header">
@@ -66,7 +79,7 @@ const Profile = () => {
             <h1>{user.username}</h1>
             <div className="profile-stats">
               <div className="stat-item">
-                <span className="stat-label">평점</span>
+                <span className="stat-label">전체 평점</span>
                 <span className="stat-value">
                   ⭐ {user.averageRating.toFixed(1)}
                 </span>
@@ -87,7 +100,7 @@ const Profile = () => {
               </div>
             </div>
             <div className="profile-region">
-              📍 {user.primaryRegion}
+              지역: {user.primaryRegion}
               {user.regions && user.regions.length > 1 && (
                 <span className="additional-regions">
                   (+{user.regions.length - 1})
@@ -128,30 +141,90 @@ const Profile = () => {
           reviews.length === 0 ? (
             <div className="no-content">받은 리뷰가 없습니다</div>
           ) : (
-            <div className="reviews-list">
-              {reviews.map(review => (
-                <div key={review._id} className="review-card">
-                  <div className="review-header">
-                    <div className="reviewer-info">
-                      <strong>{review.reviewer.username}</strong>
-                      <span className="review-rating">
-                        {renderStars(review.rating)}
-                      </span>
+            <div className="reviews-container">
+              {/* 빌려준 사람으로서 받은 리뷰 */}
+              <div className="review-section">
+                <div className="review-section-header">
+                  <h3>🏠 빌려준 사람으로서 받은 리뷰</h3>
+                  {ownerReviews.length > 0 && (
+                    <div className="section-rating">
+                      <span className="avg-rating">⭐ {ownerAvgRating.toFixed(1)}</span>
+                      <span className="review-count">({ownerReviews.length}개)</span>
                     </div>
-                    <span className="review-date">
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {review.comment && (
-                    <p className="review-comment">{review.comment}</p>
-                  )}
-                  {review.product && (
-                    <p className="review-product">
-                      관련 제품: {review.product.title}
-                    </p>
                   )}
                 </div>
-              ))}
+                {ownerReviews.length === 0 ? (
+                  <div className="no-reviews-section">아직 받은 리뷰가 없습니다</div>
+                ) : (
+                  <div className="reviews-list">
+                    {ownerReviews.map(review => (
+                      <div key={review._id} className="review-card">
+                        <div className="review-header">
+                          <div className="reviewer-info">
+                            <strong>{review.reviewer.username}</strong>
+                            <span className="review-rating">
+                              {renderStars(review.rating)}
+                            </span>
+                          </div>
+                          <span className="review-date">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {review.comment && (
+                          <p className="review-comment">{review.comment}</p>
+                        )}
+                        {review.product && (
+                          <p className="review-product">
+                            관련 제품: {review.product.title}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 빌린 사람으로서 받은 리뷰 */}
+              <div className="review-section">
+                <div className="review-section-header">
+                  <h3>📦 빌린 사람으로서 받은 리뷰</h3>
+                  {borrowerReviews.length > 0 && (
+                    <div className="section-rating">
+                      <span className="avg-rating">⭐ {borrowerAvgRating.toFixed(1)}</span>
+                      <span className="review-count">({borrowerReviews.length}개)</span>
+                    </div>
+                  )}
+                </div>
+                {borrowerReviews.length === 0 ? (
+                  <div className="no-reviews-section">아직 받은 리뷰가 없습니다</div>
+                ) : (
+                  <div className="reviews-list">
+                    {borrowerReviews.map(review => (
+                      <div key={review._id} className="review-card">
+                        <div className="review-header">
+                          <div className="reviewer-info">
+                            <strong>{review.reviewer.username}</strong>
+                            <span className="review-rating">
+                              {renderStars(review.rating)}
+                            </span>
+                          </div>
+                          <span className="review-date">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {review.comment && (
+                          <p className="review-comment">{review.comment}</p>
+                        )}
+                        {review.product && (
+                          <p className="review-product">
+                            관련 제품: {review.product.title}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )
         )}

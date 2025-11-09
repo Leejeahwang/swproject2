@@ -668,7 +668,7 @@ router.put('/:id/complete', protect, async (req, res) => {
       rental.owner,
       'rental',
       `"${product ? product.title : '물품'}" 정산이 완료되었습니다. ${(rental.ownerAmount || 0).toLocaleString()}원이 입금되었습니다.`,
-      `/profile`
+      `/profile/${rental.owner}`
     );
     
     res.json({ 

@@ -19,6 +19,10 @@ const ProductDetail = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
 
+  // 이미지 뷰어 상태
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+
   // 대여 요청 모달 상태
   const [showRentalModal, setShowRentalModal] = useState(false);
   const [rentalData, setRentalData] = useState({
@@ -93,6 +97,39 @@ const ProductDetail = () => {
       return checkDate >= start && checkDate <= end;
     });
   };
+
+  // 이미지 관련 함수
+  const openImageModal = (index) => {
+    setCurrentImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+  };
+
+  const goToPreviousImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? product.images.length - 1 : prev - 1
+    );
+  };
+
+  const goToNextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === product.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && showImageModal) {
+        closeImageModal();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showImageModal]);
 
   // 별점 렌더링 함수
   const renderStars = (rating) => {
@@ -268,9 +305,10 @@ const ProductDetail = () => {
       <div className="detail-container">
         <div className="detail-images">
           <img 
-            src={`http://localhost:5000${product.images[0]}`} 
+            src={`http://localhost:5000${product.images[currentImageIndex]}`} 
             alt={product.title}
             className="main-image"
+            onClick={() => openImageModal(currentImageIndex)}
             onError={(e) => {
               e.target.src = 'https://via.placeholder.com/600x400?text=No+Image';
             }}
@@ -282,7 +320,11 @@ const ProductDetail = () => {
                   key={index}
                   src={`http://localhost:5000${img}`}
                   alt={`${product.title} ${index + 1}`}
-                  className="thumbnail"
+                  className={`thumbnail ${currentImageIndex === index ? 'active' : ''}`}
+                  onClick={() => setCurrentImageIndex(index)}
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/150x80?text=No+Image';
+                  }}
                 />
               ))}
             </div>
@@ -611,6 +653,58 @@ const ProductDetail = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 이미지 확대 모달 */}
+      {showImageModal && (
+        <div className="image-modal-overlay" onClick={closeImageModal}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="image-modal-close" onClick={closeImageModal}>
+              ✕
+            </button>
+            
+            {product.images.length > 1 && (
+              <>
+                <button className="image-modal-prev" onClick={goToPreviousImage}>
+                  ‹
+                </button>
+                <button className="image-modal-next" onClick={goToNextImage}>
+                  ›
+                </button>
+              </>
+            )}
+
+            <img 
+              src={`http://localhost:5000${product.images[currentImageIndex]}`}
+              alt={`${product.title} ${currentImageIndex + 1}`}
+              className="image-modal-img"
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/800x600?text=No+Image';
+              }}
+            />
+
+            <div className="image-modal-counter">
+              {currentImageIndex + 1} / {product.images.length}
+            </div>
+
+            {product.images.length > 1 && (
+              <div className="image-modal-thumbnails">
+                {product.images.map((img, index) => (
+                  <img 
+                    key={index}
+                    src={`http://localhost:5000${img}`}
+                    alt={`썸네일 ${index + 1}`}
+                    className={`modal-thumbnail ${currentImageIndex === index ? 'active' : ''}`}
+                    onClick={() => setCurrentImageIndex(index)}
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/60x60?text=No+Image';
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

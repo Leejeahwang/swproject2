@@ -215,7 +215,20 @@ const MyRentals = () => {
               )}
             </h3>
             <p className="rental-price">
-              {(rental.totalAmount || rental.totalPrice || rental.rentalPrice || 0).toLocaleString()}원
+              {(rental.rentalPrice || rental.totalPrice || 0).toLocaleString()}원
+              {!isBorrower && rental.insurance && rental.insurance !== 'none' && (
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  color: '#8b5cf6', 
+                  marginLeft: '8px',
+                  fontWeight: '500',
+                  padding: '2px 8px',
+                  backgroundColor: '#f3e8ff',
+                  borderRadius: '4px'
+                }}>
+                  보험 {rental.insurance === 'basic' ? '기본형' : rental.insurance === 'premium' ? '프리미엄' : '고급형'}
+                </span>
+              )}
             </p>
             <p className="rental-period">
               {formatDateTime(rental.startDate, rental.startTime)} ~ 
@@ -239,6 +252,29 @@ const MyRentals = () => {
             <span className="label">만남 장소</span>
             <span className="value">{rental.meetingLocation}</span>
           </div>
+          {/* 빌려주는 사람에게 빌리는 사람의 선택 옵션 표시 */}
+          {!isBorrower && (
+            <>
+              {rental.borrowerSafePay && (
+                <div className="detail-item">
+                  <span className="label">안심결제</span>
+                  <span className="value" style={{ color: '#3b82f6' }}>
+                    ✓ 빌리는 사람이 선택함
+                  </span>
+                </div>
+              )}
+              {rental.insurance && rental.insurance !== 'none' && (
+                <div className="detail-item">
+                  <span className="label">보험</span>
+                  <span className="value" style={{ color: '#8b5cf6', fontWeight: '500' }}>
+                    {rental.insurance === 'basic' && '기본형 (최대 10만원)'}
+                    {rental.insurance === 'premium' && '프리미엄 (최대 50만원)'}
+                    {rental.insurance === 'luxury' && '고급형 (최대 200만원)'}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
           {/* 빌려주는 사람에게 수령 금액 표시 */}
           {!isBorrower && rental.ownerAmount !== undefined && rental.status !== 'pending' && (
             <div className="detail-item">
@@ -295,6 +331,55 @@ const MyRentals = () => {
             {/* 빌려주는 사람: pending에서 승인 */}
             {!isBorrower && rental.status === 'pending' && (
               <>
+                {/* 빌리는 사람이 선택한 옵션 요약 */}
+                {(rental.borrowerSafePay || (rental.insurance && rental.insurance !== 'none')) && (
+                  <div style={{ 
+                    padding: '12px',
+                    backgroundColor: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: '8px',
+                    marginBottom: '12px'
+                  }}>
+                    <p style={{ 
+                      fontSize: '13px', 
+                      fontWeight: '600', 
+                      color: '#1e40af',
+                      marginBottom: '8px'
+                    }}>
+                      📋 빌리는 사람이 선택한 옵션:
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {rental.borrowerSafePay && (
+                        <div style={{ 
+                          fontSize: '13px', 
+                          color: '#3b82f6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <span>✓</span>
+                          <span>안심결제 (가짜 물품 받으면 전액 환불)</span>
+                        </div>
+                      )}
+                      {rental.insurance && rental.insurance !== 'none' && (
+                        <div style={{ 
+                          fontSize: '13px', 
+                          color: '#8b5cf6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <span>🛡️</span>
+                          <span>
+                            보험 {rental.insurance === 'basic' ? '기본형' : rental.insurance === 'premium' ? '프리미엄' : '고급형'}
+                            {' '}(최대 {rental.insuranceMaxCoverage ? (rental.insuranceMaxCoverage / 10000) + '만원' : '보상'})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -321,7 +406,7 @@ const MyRentals = () => {
                         cursor: 'pointer'
                       }}
                     />
-                    <span style={{ fontWeight: '500' }}>안심결제 서비스 이용</span>
+                    <span style={{ fontWeight: '500' }}>내 안심결제 서비스 이용</span>
                   </label>
                   <span style={{ 
                     fontSize: '12px', 

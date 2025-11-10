@@ -37,7 +37,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          🔗 쉐어허브
+          쉐어허브
         </Link>
         
         <div className="navbar-menu">

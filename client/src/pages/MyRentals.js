@@ -215,7 +215,10 @@ const MyRentals = () => {
               )}
             </h3>
             <p className="rental-price">
-              {(rental.rentalPrice || rental.totalPrice || 0).toLocaleString()}원
+              {isBorrower 
+                ? (rental.totalAmount || rental.totalPrice || rental.rentalPrice || 0).toLocaleString()
+                : (rental.rentalPrice || rental.totalPrice || 0).toLocaleString()
+              }원
               {!isBorrower && rental.insurance && rental.insurance !== 'none' && (
                 <span style={{ 
                   fontSize: '0.75rem', 

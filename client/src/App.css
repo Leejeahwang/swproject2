@@ -1,0 +1,87 @@
+.App {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 80px; /* Navbar height */
+}
+
+.soft-star-icon {
+  display: inline-block;
+  width: 1.3em;
+  height: 1.3em;
+  background: var(--primary-color);
+  -webkit-mask: var(--star-mask) no-repeat center / contain;
+  mask: var(--star-mask) no-repeat center / contain;
+  filter: drop-shadow(2px 2px 2px rgba(163, 177, 198, 0.4));
+  vertical-align: -0.25em;
+  position: relative;
+}
+
+.soft-star-mini {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  background: var(--primary-color);
+  -webkit-mask: var(--star-mask) no-repeat center / contain;
+  mask: var(--star-mask) no-repeat center / contain;
+  filter: drop-shadow(1px 1px 2px rgba(163, 177, 198, 0.4));
+  vertical-align: -0.2em;
+  position: relative;
+}
+
+.soft-star-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--dark-color);
+}
+
+/* 버튼 스타일 */
+.btn {
+  padding: 12px 24px;
+  border: 1px solid var(--border-soft-dark);
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: var(--box-shadow);
+  color: var(--dark-color);
+  text-decoration: none;
+  display: inline-block;
+  position: relative;
+  isolation: isolate;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-hover);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--box-shadow-pressed);
+}
+
+.btn-primary {
+  background: var(--bg-color);
+  color: var(--primary-color);
+  border: 1px solid var(--border-soft-dark);
+}
+
+.btn-primary:hover {
+  color: var(--secondary-color);
+}
+
+.btn-outline {
+  background: var(--bg-color);
+  color: var(--dark-color);
+  border: 1px solid var(--border-soft-dark);
+}
+
+.btn-outline:hover {
+  color: var(--primary-color);
+}

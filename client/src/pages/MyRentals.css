@@ -1,0 +1,304 @@
+.my-rentals-page {
+  padding-bottom: 40px;
+}
+
+.my-rentals-page h1 {
+  font-size: 32px;
+  color: var(--dark-color);
+  margin-bottom: 30px;
+}
+
+.rentals-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+}
+
+.rentals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rental-card {
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--box-shadow);
+  border: 1px solid rgba(192, 209, 225, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  isolation: isolate;
+}
+
+.rental-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--box-shadow-hover);
+}
+
+.rental-header {
+  display: flex;
+  gap: 15px;
+  align-items: start;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+}
+
+.rental-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.rental-image:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.rental-info {
+  flex: 1;
+}
+
+.rental-info h3 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: var(--dark-color);
+}
+
+.rental-info h3 a {
+  transition: color 0.2s;
+}
+
+.rental-info h3 a:hover {
+  color: var(--primary-color);
+}
+
+.rental-price {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+}
+
+.rental-period {
+  font-size: 14px;
+  color: #666;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+.status-pending {
+  background-color: var(--warning-color);
+}
+
+.status-approved {
+  background-color: var(--info-color);
+}
+
+.status-ongoing {
+  background-color: var(--primary-color);
+}
+
+.status-returning {
+  background-color: #ff9800;
+}
+
+.status-completed {
+  background-color: var(--success-color);
+}
+
+.status-cancelled {
+  background-color: var(--danger-color);
+}
+
+.rental-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.detail-item .label {
+  font-weight: 600;
+  color: #666;
+}
+
+.detail-item .value {
+  color: var(--dark-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-item .soft-star-badge {
+  margin-left: 8px;
+  font-size: 0.85rem;
+}
+
+.rental-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.rental-actions .btn {
+  flex: 1;
+}
+
+/* 리뷰 모달 */
+.review-target {
+  background: var(--bg-color);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: var(--box-shadow-inset);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.review-target p {
+  margin: 5px 0;
+  font-size: 15px;
+  color: var(--dark-color);
+}
+
+.review-product {
+  font-size: 14px !important;
+  color: #666 !important;
+}
+
+.star-rating {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.rating-star {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: inline-block;
+  position: relative;
+}
+
+.rating-star .star-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #d1d9e6;
+  -webkit-mask: var(--star-mask) no-repeat center / contain;
+  mask: var(--star-mask) no-repeat center / contain;
+  transition: all 0.2s ease;
+  filter: 
+    drop-shadow(2px 2px 3px rgba(163, 177, 198, 0.5)) 
+    drop-shadow(-2px -2px 3px rgba(255, 255, 255, 0.8));
+}
+
+.rating-star:active {
+  transform: scale(0.95);
+}
+
+.rating-star.active .star-icon {
+  background: linear-gradient(145deg, #4fc3f7, #0288d1);
+  filter: 
+    drop-shadow(4px 4px 8px rgba(163, 177, 198, 0.6)) 
+    drop-shadow(-4px -4px 8px rgba(255, 255, 255, 0.9));
+}
+
+.rating-star:hover {
+  transform: translateY(-2px);
+}
+
+.rating-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 10px;
+}
+
+.my-rentals-page .modal-content .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.my-rentals-page .modal-content .form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--dark-color);
+  font-size: 0.95rem;
+}
+
+.my-rentals-page .modal-content .form-group textarea {
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--bg-color);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  box-shadow: var(--box-shadow-inset);
+  color: var(--dark-color);
+  resize: vertical;
+}
+
+.my-rentals-page .modal-content .form-group textarea:focus {
+  outline: none;
+  box-shadow: var(--box-shadow-pressed);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+.my-rentals-page .modal-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+}
+
+.my-rentals-page .modal-content {
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 30px;
+  position: relative;
+}
+
+.my-rentals-page .modal-content::after {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .rental-header {
+    flex-direction: column;
+  }
+
+  .rental-actions {
+    flex-direction: column;
+  }
+  
+  .star-rating .star {
+    font-size: 28px;
+  }
+}
+

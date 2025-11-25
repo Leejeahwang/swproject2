@@ -1,0 +1,42 @@
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: #7fa5c9;
+}
+
+.rating-stars-sm .rating-star {
+  width: 14px;
+  height: 14px;
+}
+
+.rating-stars-md .rating-star {
+  width: 18px;
+  height: 18px;
+}
+
+.rating-stars-lg .rating-star {
+  width: 22px;
+  height: 22px;
+}
+
+.rating-star path {
+  stroke-width: 1.2;
+}
+
+.rating-star.filled path {
+  fill: #9ab7d3;
+  stroke: #7fa5c9;
+}
+
+.rating-star.empty path {
+  fill: rgba(255, 255, 255, 0.2);
+  stroke: rgba(127, 165, 201, 0.6);
+}
+
+.rating-score {
+  font-size: 0.85rem;
+  color: #7289a7;
+}
+

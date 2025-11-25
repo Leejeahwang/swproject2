@@ -1,0 +1,43 @@
+.my-products-page {
+  padding-bottom: 40px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  font-size: 32px;
+  color: var(--dark-color);
+}
+
+.empty-state {
+  background: var(--bg-color);
+  border-radius: var(--border-radius);
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: var(--box-shadow);
+  border: 1px solid rgba(192, 209, 225, 0.15);
+}
+
+.empty-state p {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .page-header .btn {
+    width: 100%;
+  }
+}
+

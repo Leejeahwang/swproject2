@@ -117,6 +117,34 @@
   box-shadow: var(--box-shadow), inset 0 0 0 2px #d32f2f;
 }
 
+/* 반납 지연 스타일 */
+.calendar-day.overdue {
+  background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
+  color: #b71c1c;
+  font-weight: 700;
+  box-shadow: var(--box-shadow), inset 0 0 0 2px #d32f2f;
+  animation: pulse-calendar 2s infinite;
+  position: relative;
+}
+
+.calendar-day.overdue .overdue-dot {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #b71c1c;
+}
+
+@keyframes pulse-calendar {
+  0%, 100% {
+    box-shadow: var(--box-shadow), inset 0 0 0 2px #d32f2f;
+  }
+  50% {
+    box-shadow: var(--box-shadow), inset 0 0 0 3px #b71c1c, 0 0 10px rgba(211, 47, 47, 0.3);
+  }
+}
+
 .calendar-legend {
   display: flex;
   justify-content: center;
@@ -153,6 +181,11 @@
 .legend-color.today {
   background: #e3f2fd;
   border-color: #42a5f5;
+}
+
+.legend-color.overdue {
+  background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
+  border-color: #d32f2f;
 }
 
 @media (max-width: 768px) {

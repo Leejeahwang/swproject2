@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -18,6 +18,8 @@ import MyRentals from './pages/MyRentals';
 import ChatList from './pages/ChatList';
 import ChatRoom from './pages/ChatRoom';
 import Notifications from './pages/Notifications';
+import VerifyEmail from './pages/VerifyEmail';
+import Admin from './pages/Admin';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -36,6 +38,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email/:token" element={<VerifyEmail />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               
               <Route path="/products/new" element={
@@ -79,6 +82,12 @@ function App() {
               <Route path="/notifications" element={
                 <PrivateRoute>
                   <Notifications />
+                </PrivateRoute>
+              } />
+              
+              <Route path="/admin" element={
+                <PrivateRoute>
+                  <Admin />
                 </PrivateRoute>
               } />
             </Routes>

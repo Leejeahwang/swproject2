@@ -3,8 +3,17 @@ import { Link } from 'react-router-dom';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
-  const getStatusBadge = (status) => {
-    switch(status) {
+  const getStatusBadge = () => {
+    // 지연 상태 우선 표시
+    if (product.isOverdue) {
+      return (
+        <span className="status-badge overdue">
+          🚨 반납 지연 {product.overdueDays}일
+        </span>
+      );
+    }
+    
+    switch(product.status) {
       case 'available':
         return <span className="status-badge available">대여 가능</span>;
       case 'rented':
@@ -18,7 +27,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link to={`/products/${product.id || product._id}`} className="product-card-link">
-      <div className={`product-card ${product.status === 'rented' ? 'rented' : ''}`}>
+      <div className={`product-card ${product.status === 'rented' ? 'rented' : ''} ${product.isOverdue ? 'overdue' : ''}`}>
         <div className="product-image-container">
           <img 
             src={`http://localhost:5000${product.images[0]}`} 
@@ -28,7 +37,7 @@ const ProductCard = ({ product }) => {
               e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
             }}
           />
-          {getStatusBadge(product.status)}
+          {getStatusBadge()}
         </div>
         
         <div className="product-info">

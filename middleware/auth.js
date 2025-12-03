@@ -35,6 +35,14 @@ exports.protect = async (req, res, next) => {
   }
 };
 
+// 관리자 권한 체크 미들웨어
+exports.adminOnly = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: '관리자 권한이 필요합니다' });
+  }
+  next();
+};
+
 // 파일 업로드 설정
 const multer = require('multer');
 const path = require('path');

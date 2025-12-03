@@ -74,11 +74,34 @@ router.get('/', async (req, res) => {
         products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    // owner 정보 추가
+    // owner 정보 및 지연 상태 추가
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     products = products.map(product => {
       const owner = db.get('users').find({ id: product.owner }).value();
+      
+      // 현재 진행 중인 대여 확인 (지연 체크용)
+      const activeRental = db.get('rentals')
+        .find(r => r.product === product.id && ['in_progress', 'approved', 'ongoing'].includes(r.status))
+        .value();
+      
+      let isOverdue = false;
+      let overdueDays = 0;
+      
+      if (activeRental && activeRental.endDate) {
+        const endDate = new Date(activeRental.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        if (today > endDate) {
+          isOverdue = true;
+          overdueDays = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+        }
+      }
+      
       return {
         ...product,
+        isOverdue,
+        overdueDays,
         owner: owner ? {
           id: owner.id,
           username: owner.username,

@@ -44,6 +44,7 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/rentals', require('./routes/rentals'));
 app.use('/api/chats', require('./routes/chats'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Socket.io 채팅 기능
 const chatNamespace = io.of('/chat');
@@ -149,9 +150,101 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: '서버 오류가 발생했습니다', error: err.message });
 });
 
+// 반납 지연 체크 및 알림 스케줄러
+const checkOverdueRentals = () => {
+  const { createNotification } = require('./routes/notifications');
+  const rentals = db.get('rentals').value() || [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  rentals.forEach(rental => {
+    if (rental.status !== 'in_progress') return;
+
+    const endDate = new Date(rental.endDate);
+    endDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+    const product = db.get('products').find({ id: rental.product }).value();
+    const productTitle = product ? product.title : '상품';
+
+    // 1일 전 알림
+    if (diffDays === -1 && !rental.notifiedOneDayBefore) {
+      createNotification(
+        rental.borrower,
+        'rental',
+        `📅 "${productTitle}" 반납 예정일이 내일입니다!`,
+        '/my-rentals'
+      );
+      createNotification(
+        rental.owner,
+        'rental',
+        `📅 "${productTitle}" 반납 예정일이 내일입니다.`,
+        '/my-rentals'
+      );
+      db.get('rentals').find({ id: rental.id }).assign({ notifiedOneDayBefore: true }).write();
+    }
+
+    // 당일 알림
+    if (diffDays === 0 && !rental.notifiedOnDueDate) {
+      createNotification(
+        rental.borrower,
+        'rental',
+        `⚠️ "${productTitle}" 반납 예정일이 오늘입니다! 반납해주세요.`,
+        '/my-rentals'
+      );
+      createNotification(
+        rental.owner,
+        'rental',
+        `⚠️ "${productTitle}" 반납 예정일이 오늘입니다.`,
+        '/my-rentals'
+      );
+      db.get('rentals').find({ id: rental.id }).assign({ notifiedOnDueDate: true }).write();
+    }
+
+    // 지연 알림 (매일)
+    if (diffDays > 0) {
+      const lastOverdueNotification = rental.lastOverdueNotification 
+        ? new Date(rental.lastOverdueNotification) 
+        : null;
+      
+      const shouldNotify = !lastOverdueNotification || 
+        (today - lastOverdueNotification) >= (1000 * 60 * 60 * 24);
+
+      if (shouldNotify) {
+        const dailyRate = product ? product.price : 0;
+        const lateFee = Math.floor(dailyRate * 1.5 * diffDays);
+
+        createNotification(
+          rental.borrower,
+          'rental',
+          `🚨 "${productTitle}" 반납이 ${diffDays}일 지연되었습니다! 예상 지연 요금: ${lateFee.toLocaleString()}원`,
+          '/my-rentals'
+        );
+        createNotification(
+          rental.owner,
+          'rental',
+          `🚨 "${productTitle}" 반납이 ${diffDays}일 지연되고 있습니다.`,
+          '/my-rentals'
+        );
+        db.get('rentals').find({ id: rental.id }).assign({ 
+          lastOverdueNotification: today.toISOString(),
+          isOverdue: true,
+          overdueDays: diffDays
+        }).write();
+      }
+    }
+  });
+};
+
+// 1시간마다 체크 (개발 중에는 1분마다 테스트 가능)
+setInterval(checkOverdueRentals, 60 * 60 * 1000); // 1시간
+// 서버 시작 시 한 번 실행
+setTimeout(checkOverdueRentals, 5000);
+
 // 서버 시작
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`서버가 포트 ${PORT}에서 실행 중입니다`);
+  console.log('✅ 반납 지연 체크 스케줄러 시작됨');
 });
 

@@ -108,6 +108,15 @@
   color: var(--primary-color);
 }
 
+.navbar-admin {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.navbar-admin:hover {
+  color: #764ba2;
+}
+
 .navbar-btn {
   padding: 0;
   background: transparent;

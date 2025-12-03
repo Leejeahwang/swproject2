@@ -566,15 +566,34 @@ router.put('/:id/return', protect, async (req, res) => {
       return res.status(403).json({ message: '반납 권한이 없습니다' });
     }
 
-    // approved 또는 ongoing 상태에서 반납 가능
-    if (rental.status !== 'ongoing' && rental.status !== 'approved') {
+    // approved 또는 ongoing 상태에서 반납 가능 (in_progress도 포함)
+    if (rental.status !== 'ongoing' && rental.status !== 'approved' && rental.status !== 'in_progress') {
       return res.status(400).json({ message: '승인된 대여 또는 진행 중인 대여만 반납할 수 있습니다' });
+    }
+
+    // 지연 요금 계산
+    const product = db.get('products').find({ id: rental.product }).value();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(rental.endDate);
+    endDate.setHours(0, 0, 0, 0);
+    
+    let overdueDays = 0;
+    let lateFee = 0;
+    
+    if (today > endDate) {
+      overdueDays = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+      const dailyRate = product ? product.price : 0;
+      lateFee = Math.floor(dailyRate * 1.5 * overdueDays); // 1.5배 지연 요금
     }
 
     db.get('rentals')
       .find({ id: req.params.id })
       .assign({ 
         status: 'returning',
+        returnRequestedAt: new Date().toISOString(),
+        overdueDays: overdueDays,
+        lateFee: lateFee,
         updatedAt: new Date().toISOString()
       })
       .write();
@@ -582,15 +601,24 @@ router.put('/:id/return', protect, async (req, res) => {
     const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
     
     // 반납 요청 알림 생성 - 빌려준 사람에게
-    const product = db.get('products').find({ id: rental.product }).value();
+    let notificationMessage = `"${product ? product.title : '물품'}" 반납 확인 요청이 왔습니다`;
+    if (overdueDays > 0) {
+      notificationMessage += ` (${overdueDays}일 지연, 지연 요금: ${lateFee.toLocaleString()}원)`;
+    }
+    
     createNotification(
       rental.owner,
       'rental',
-      `"${product ? product.title : '물품'}" 반납 확인 요청이 왔습니다`,
+      notificationMessage,
       `/my-rentals`
     );
     
-    res.json({ success: true, rental: updatedRental });
+    res.json({ 
+      success: true, 
+      rental: updatedRental,
+      overdueDays,
+      lateFee
+    });
   } catch (error) {
     res.status(500).json({ message: '반납 요청 실패', error: error.message });
   }
@@ -617,6 +645,12 @@ router.put('/:id/complete', protect, async (req, res) => {
       return res.status(400).json({ message: '반납 대기 중인 대여만 완료할 수 있습니다' });
     }
 
+    // 지연 요금 포함 총 정산 금액 계산
+    const lateFee = rental.lateFee || 0;
+    const overdueDays = rental.overdueDays || 0;
+    const baseOwnerAmount = rental.ownerAmount || 0;
+    const totalOwnerAmount = baseOwnerAmount + lateFee; // 지연 요금도 소유자에게
+
     // 정산 처리
     db.get('rentals')
       .find({ id: req.params.id })
@@ -624,6 +658,8 @@ router.put('/:id/complete', protect, async (req, res) => {
         status: 'completed',
         paymentStatus: 'settled',
         settledAt: Date.now(),
+        finalOwnerAmount: totalOwnerAmount,
+        completedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
       .write();
@@ -634,7 +670,7 @@ router.put('/:id/complete', protect, async (req, res) => {
 
     if (owner) {
       const currentEarnings = owner.totalEarnings || 0;
-      const newEarnings = currentEarnings + (rental.ownerAmount || 0);
+      const newEarnings = currentEarnings + totalOwnerAmount;
       
       db.get('users')
         .find({ id: rental.owner })
@@ -653,28 +689,43 @@ router.put('/:id/complete', protect, async (req, res) => {
     }
 
     const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    const product = db.get('products').find({ id: rental.product }).value();
     
     // 반납 완료 알림 생성 - 빌린 사람에게
-    const product = db.get('products').find({ id: rental.product }).value();
+    let borrowerMessage = `"${product ? product.title : '물품'}" 반납이 완료되었습니다`;
+    if (overdueDays > 0) {
+      borrowerMessage += ` (지연 ${overdueDays}일, 지연 요금: ${lateFee.toLocaleString()}원)`;
+    }
+    
     createNotification(
       rental.borrower,
       'rental',
-      `"${product ? product.title : '물품'}" 반납이 완료되었습니다`,
+      borrowerMessage,
       `/my-rentals`
     );
     
     // 정산 완료 알림 생성 - 빌려준 사람에게
+    let ownerMessage = `"${product ? product.title : '물품'}" 정산이 완료되었습니다. ${totalOwnerAmount.toLocaleString()}원이 입금되었습니다.`;
+    if (overdueDays > 0) {
+      ownerMessage += ` (지연 요금 ${lateFee.toLocaleString()}원 포함)`;
+    }
+    
     createNotification(
       rental.owner,
       'rental',
-      `"${product ? product.title : '물품'}" 정산이 완료되었습니다. ${(rental.ownerAmount || 0).toLocaleString()}원이 입금되었습니다.`,
+      ownerMessage,
       `/profile`
     );
     
     res.json({ 
       success: true, 
       rental: updatedRental,
-      message: `정산이 완료되었습니다. ${(rental.ownerAmount || 0).toLocaleString()}원이 입금되었습니다.`
+      overdueDays,
+      lateFee,
+      totalAmount: totalOwnerAmount,
+      message: overdueDays > 0 
+        ? `정산이 완료되었습니다. ${totalOwnerAmount.toLocaleString()}원이 입금되었습니다. (지연 요금 ${lateFee.toLocaleString()}원 포함)`
+        : `정산이 완료되었습니다. ${totalOwnerAmount.toLocaleString()}원이 입금되었습니다.`
     });
   } catch (error) {
     res.status(500).json({ message: '대여 완료 처리 실패', error: error.message });

@@ -50,6 +50,11 @@ const Navbar = () => {
               <Link to={`/profile/${user.id}`} className="navbar-link">
                 프로필
               </Link>
+              {user.role === 'admin' && (
+                <Link to="/admin" className="navbar-link navbar-admin">
+                  🛡️ 관리자
+                </Link>
+              )}
               <Link to="/notifications" className="navbar-notification" aria-label="알림">
                 <svg className="notification-icon" viewBox="0 0 24 24" role="img" aria-hidden="true">
                   <path d="M12 22a1.75 1.75 0 0 0 1.743-1.607L13.75 20h-3.5a1.75 1.75 0 0 0 1.607 1.743L12 21.999Zm7-6v-4.25c0-3.355-2.203-6.155-5.25-6.84V4.5a1.75 1.75 0 1 0-3.5 0v.41C7.203 5.595 5 8.395 5 11.75V16l-1.45 1.45A.75.75 0 0 0 4.06 18.5h15.88a.75.75 0 0 0 .51-1.28L19 16Z" />

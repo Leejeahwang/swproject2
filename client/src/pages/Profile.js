@@ -1,19 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 import './Profile.css';
 
 const Profile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user: currentUser, resendVerification, verifyCode, deleteAccount } = useAuth();
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('products'); // products, reviews
+  const [activeTab, setActiveTab] = useState('products');
+
+  // 인증 관련 상태
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const inputRefs = useRef([]);
+
+  // 계정 탈퇴 관련 상태
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  // 본인 프로필인지 확인
+  const isOwnProfile = currentUser && currentUser.id === id;
+  // 미인증 상태 확인
+  const isUnverified = isOwnProfile && currentUser.isVerified === false;
+
+  // 쿨다운 타이머
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   useEffect(() => {
     loadUserData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadUserData = async () => {
@@ -35,6 +67,113 @@ const Profile = () => {
     }
   };
 
+  // 인증번호 발송
+  const handleSendCode = async () => {
+    if (!currentUser?.email) return;
+    
+    setResendLoading(true);
+    setMessage({ type: '', text: '' });
+    
+    const result = await resendVerification(currentUser.email);
+    
+    if (result.success) {
+      setShowCodeInput(true);
+      setMessage({ type: 'success', text: '✅ 인증번호가 발송되었습니다!' });
+      setResendCooldown(60);
+      setVerificationCode(['', '', '', '', '', '']);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    } else {
+      setMessage({ type: 'error', text: `❌ ${result.message}` });
+    }
+    
+    setResendLoading(false);
+  };
+
+  // 인증번호 입력 핸들러
+  const handleCodeChange = (index, value) => {
+    if (value.length > 1) value = value.slice(-1);
+    if (!/^\d*$/.test(value)) return;
+
+    const newCode = [...verificationCode];
+    newCode[index] = value;
+    setVerificationCode(newCode);
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').slice(0, 6);
+    if (/^\d+$/.test(pastedData)) {
+      const newCode = pastedData.split('').concat(Array(6).fill('')).slice(0, 6);
+      setVerificationCode(newCode);
+      inputRefs.current[Math.min(pastedData.length, 5)]?.focus();
+    }
+  };
+
+  // 인증번호 확인
+  const handleVerifyCode = async () => {
+    const code = verificationCode.join('');
+    if (code.length !== 6) {
+      setMessage({ type: 'error', text: '6자리 인증번호를 모두 입력해주세요' });
+      return;
+    }
+
+    setVerifyLoading(true);
+    setMessage({ type: '', text: '' });
+
+    const result = await verifyCode(currentUser.email, code);
+
+    if (result.success) {
+      setMessage({ type: 'success', text: '🎉 인증이 완료되었습니다!' });
+      setShowCodeInput(false);
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      setMessage({ type: 'error', text: result.message });
+      setVerificationCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    }
+
+    setVerifyLoading(false);
+  };
+
+  // 계정 탈퇴
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setDeleteError('비밀번호를 입력해주세요');
+      return;
+    }
+
+    setDeleteLoading(true);
+    setDeleteError('');
+
+    const result = await deleteAccount(deletePassword);
+
+    if (result.success) {
+      alert('계정이 삭제되었습니다. 이용해주셔서 감사합니다.');
+      navigate('/');
+    } else {
+      setDeleteError(result.message);
+    }
+
+    setDeleteLoading(false);
+  };
+
+  // 모달 닫기
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeletePassword('');
+    setDeleteError('');
+  };
+
   if (loading) {
     return (
       <div className="loading">
@@ -47,11 +186,9 @@ const Profile = () => {
     return <div className="no-products">사용자를 찾을 수 없습니다</div>;
   }
 
-  // 리뷰를 타입별로 분리
-  const ownerReviews = reviews.filter(review => review.type === 'borrower'); // 빌려준 사람으로서 받은 리뷰
-  const borrowerReviews = reviews.filter(review => review.type === 'owner'); // 빌린 사람으로서 받은 리뷰
+  const ownerReviews = reviews.filter(review => review.type === 'borrower');
+  const borrowerReviews = reviews.filter(review => review.type === 'owner');
 
-  // 각 타입별 평균 평점 계산
   const ownerAvgRating = ownerReviews.length > 0
     ? ownerReviews.reduce((acc, rev) => acc + rev.rating, 0) / ownerReviews.length
     : 0;
@@ -62,6 +199,126 @@ const Profile = () => {
 
   return (
     <div className="profile-page">
+      {/* 계정 탈퇴 모달 */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={closeDeleteModal}>
+          <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>⚠️ 계정 탈퇴</h2>
+              <button className="modal-close" onClick={closeDeleteModal}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="delete-warning">
+                <p><strong>정말 탈퇴하시겠습니까?</strong></p>
+                <p>탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
+                <ul>
+                  <li>등록한 물품</li>
+                  <li>대여 기록</li>
+                  <li>채팅 내역</li>
+                  <li>받은 리뷰</li>
+                </ul>
+              </div>
+              
+              {deleteError && (
+                <div className="alert alert-error">{deleteError}</div>
+              )}
+              
+              <div className="form-group">
+                <label>비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="비밀번호를 입력하세요"
+                  disabled={deleteLoading}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary" 
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+              >
+                취소
+              </button>
+              <button 
+                className="btn btn-danger" 
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 미인증 상태 배너 */}
+      {isUnverified && (
+        <div className="verification-banner">
+          <div className="verification-banner-content">
+            <div className="verification-icon">⚠️</div>
+            <div className="verification-text">
+              <strong>이메일 인증이 완료되지 않았습니다</strong>
+              <p>일부 기능이 제한될 수 있습니다.</p>
+            </div>
+            {!showCodeInput && (
+              <button 
+                className="btn btn-verification"
+                onClick={handleSendCode}
+                disabled={resendLoading}
+              >
+                {resendLoading ? '발송 중...' : '인증번호 받기'}
+              </button>
+            )}
+          </div>
+
+          {showCodeInput && (
+            <div className="verification-code-section">
+              <p className="code-instruction">이메일로 받은 6자리 인증번호를 입력하세요</p>
+              <div className="code-input-row">
+                {verificationCode.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={el => inputRefs.current[index] = el}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onPaste={handlePaste}
+                    className="code-input-small"
+                    disabled={verifyLoading}
+                  />
+                ))}
+                <button
+                  onClick={handleVerifyCode}
+                  className="btn btn-verify"
+                  disabled={verifyLoading}
+                >
+                  {verifyLoading ? '확인 중...' : '인증'}
+                </button>
+              </div>
+              <button
+                onClick={handleSendCode}
+                className="btn-resend-small"
+                disabled={resendLoading || resendCooldown > 0}
+              >
+                {resendCooldown > 0 ? `${resendCooldown}초 후 재발송` : '인증번호 다시 받기'}
+              </button>
+            </div>
+          )}
+
+          {message.text && (
+            <div className={`verification-message ${message.type}`}>
+              {message.text}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="profile-header">
         <div className="profile-info">
           {user.profileImage && (
@@ -105,6 +362,16 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* 본인 프로필일 때만 계정 탈퇴 버튼 표시 */}
+        {isOwnProfile && (
+          <button 
+            className="btn-delete-account"
+            onClick={() => setShowDeleteModal(true)}
+          >
+            계정 탈퇴
+          </button>
+        )}
       </div>
 
       <div className="profile-tabs">
@@ -138,7 +405,6 @@ const Profile = () => {
             <div className="no-content">받은 리뷰가 없습니다</div>
           ) : (
             <div className="reviews-container">
-              {/* 빌려준 사람으로서 받은 리뷰 */}
               <div className="review-section">
                 <div className="review-section-header">
                   <h3>🏠 빌려준 사람으로서 받은 리뷰</h3>
@@ -182,7 +448,6 @@ const Profile = () => {
                 )}
               </div>
 
-              {/* 빌린 사람으로서 받은 리뷰 */}
               <div className="review-section">
                 <div className="review-section-header">
                   <h3>📦 빌린 사람으로서 받은 리뷰</h3>
@@ -234,4 +499,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

@@ -3,18 +3,40 @@ import './Calendar.css';
 
 const Calendar = ({ reservedDates }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // 해당 날짜가 예약되었는지 확인
-  const isDateReserved = (date) => {
-    return reservedDates.some(reserved => {
+  // 해당 날짜가 예약되었는지 확인 (지연 포함)
+  const getDateStatus = (date) => {
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
+    for (const reserved of reservedDates) {
       const start = new Date(reserved.startDate);
       const end = new Date(reserved.endDate);
       start.setHours(0, 0, 0, 0);
       end.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
       
-      return date >= start && date <= end;
-    });
+      // 정상 예약 기간 내
+      if (checkDate >= start && checkDate <= end) {
+        return { reserved: true, overdue: false };
+      }
+      
+      // 지연된 경우: 종료일이 지났는데 아직 진행 중인 대여
+      if (reserved.status === 'in_progress' || reserved.status === 'ongoing' || reserved.status === 'approved') {
+        if (end < today && checkDate > end && checkDate <= today) {
+          return { reserved: true, overdue: true };
+        }
+      }
+    }
+    
+    return { reserved: false, overdue: false };
+  };
+
+  // 이전 버전과 호환성 유지 (외부에서 사용 가능)
+  // eslint-disable-next-line no-unused-vars
+  const isDateReserved = (date) => {
+    return getDateStatus(date).reserved;
   };
 
   // 현재 월의 첫날과 마지막날
@@ -85,8 +107,8 @@ const Calendar = ({ reservedDates }) => {
 
         {/* 날짜 */}
         {calendarDays.map((date, index) => {
-          const reserved = isDateReserved(date);
-          const today = isToday(date);
+          const status = getDateStatus(date);
+          const isTodayDate = isToday(date);
           const currentMonth = isCurrentMonth(date);
 
           return (
@@ -94,12 +116,15 @@ const Calendar = ({ reservedDates }) => {
               key={index}
               className={`calendar-day 
                 ${!currentMonth ? 'other-month' : ''} 
-                ${reserved ? 'reserved' : ''} 
-                ${today ? 'today' : ''}
+                ${status.reserved ? 'reserved' : ''} 
+                ${status.overdue ? 'overdue' : ''}
+                ${isTodayDate ? 'today' : ''}
                 ${date.getDay() === 0 ? 'sunday' : date.getDay() === 6 ? 'saturday' : ''}
               `}
+              title={status.overdue ? '반납 지연 중' : status.reserved ? '예약됨' : ''}
             >
               {date.getDate()}
+              {status.overdue && <span className="overdue-dot">!</span>}
             </div>
           );
         })}
@@ -113,6 +138,10 @@ const Calendar = ({ reservedDates }) => {
         <div className="legend-item">
           <span className="legend-color reserved"></span>
           <span>예약됨</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color overdue"></span>
+          <span>반납 지연</span>
         </div>
         <div className="legend-item">
           <span className="legend-color today"></span>

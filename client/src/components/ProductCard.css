@@ -61,6 +61,29 @@
   background-color: var(--danger-color);
 }
 
+.status-badge.overdue {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  animation: pulse-overdue 2s infinite;
+}
+
+@keyframes pulse-overdue {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
+  }
+}
+
+/* 지연된 제품 카드 스타일 */
+.product-card.overdue {
+  border: 2px solid rgba(220, 53, 69, 0.3);
+}
+
+.product-card.overdue .product-image {
+  opacity: 0.75;
+}
+
 .product-info {
   padding: 15px;
   background: var(--bg-color);

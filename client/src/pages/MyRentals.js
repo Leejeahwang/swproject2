@@ -46,11 +46,41 @@ const MyRentals = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
+  // 지연 상태 계산
+  const getOverdueInfo = (rental) => {
+    if (!rental.endDate) return { isOverdue: false, days: 0, fee: 0 };
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(rental.endDate);
+    endDate.setHours(0, 0, 0, 0);
+    
+    if (today > endDate && ['approved', 'ongoing', 'in_progress'].includes(rental.status)) {
+      const days = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+      const dailyRate = rental.product?.price || 0;
+      const fee = Math.floor(dailyRate * 1.5 * days);
+      return { isOverdue: true, days, fee };
+    }
+    
+    return { isOverdue: false, days: 0, fee: 0 };
+  };
+
+  const getStatusBadge = (status, rental) => {
+    // 지연 상태 우선 체크
+    const overdueInfo = getOverdueInfo(rental);
+    if (overdueInfo.isOverdue) {
+      return (
+        <span className="status-badge status-overdue">
+          🚨 반납 지연 {overdueInfo.days}일
+        </span>
+      );
+    }
+
     const badges = {
       pending: { text: '대기중', class: 'status-pending' },
       approved: { text: '예약 확정', class: 'status-approved' },
       ongoing: { text: '진행중', class: 'status-ongoing' },
+      in_progress: { text: '대여중', class: 'status-ongoing' },
       returning: { text: '반납 대기', class: 'status-returning' },
       completed: { text: '완료', class: 'status-completed' },
       cancelled: { text: '취소됨', class: 'status-cancelled' }
@@ -97,11 +127,26 @@ const MyRentals = () => {
   };
 
   const handleReturn = async (rentalId) => {
-    if (!window.confirm('물품을 반납하시겠습니까?\n빌려준 사람이 확인해야 최종 완료됩니다.')) return;
+    const rental = borrowedRentals.find(r => r.id === rentalId);
+    const overdueInfo = rental ? getOverdueInfo(rental) : { isOverdue: false, days: 0, fee: 0 };
+    
+    let confirmMsg = '물품을 반납하시겠습니까?\n빌려준 사람이 확인해야 최종 완료됩니다.';
+    
+    if (overdueInfo.isOverdue) {
+      confirmMsg = `⚠️ 반납 지연 안내\n\n지연일수: ${overdueInfo.days}일\n지연 요금: ${overdueInfo.fee.toLocaleString()}원 (일일 요금의 1.5배)\n\n반납을 진행하시겠습니까?`;
+    }
+    
+    if (!window.confirm(confirmMsg)) return;
 
     try {
-      await api.put(`/rentals/${rentalId}/return`);
-      alert('반납 요청이 완료되었습니다.\n빌려준 사람의 확인을 기다려주세요.');
+      const response = await api.put(`/rentals/${rentalId}/return`);
+      let alertMsg = '반납 요청이 완료되었습니다.\n빌려준 사람의 확인을 기다려주세요.';
+      
+      if (response.data.overdueDays > 0) {
+        alertMsg += `\n\n지연 요금: ${response.data.lateFee.toLocaleString()}원이 추가됩니다.`;
+      }
+      
+      alert(alertMsg);
       loadRentals();
     } catch (error) {
       alert(error.response?.data?.message || '반납 요청 실패');
@@ -238,7 +283,7 @@ const MyRentals = () => {
               {formatDateTime(rental.endDate, rental.endTime)}
             </p>
           </div>
-          {getStatusBadge(rental.status)}
+          {getStatusBadge(rental.status, rental)}
         </div>
 
         <div className="rental-details">
@@ -310,6 +355,24 @@ const MyRentals = () => {
             </div>
           )}
         </div>
+
+        {/* 지연 요금 정보 표시 */}
+        {(() => {
+          const overdueInfo = getOverdueInfo(rental);
+          if (overdueInfo.isOverdue) {
+            return (
+              <div className="overdue-fee-info">
+                <span className="fee-label">
+                  🚨 지연 {overdueInfo.days}일 - 예상 지연 요금
+                </span>
+                <span className="fee-amount">
+                  +{overdueInfo.fee.toLocaleString()}원
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {/* 완료된 대여에서는 리뷰 작성 버튼 표시 */}
         {rental.status === 'completed' && (

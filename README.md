@@ -2,11 +2,45 @@
 
 이웃과 함께하는 물품 공유 플랫폼입니다. 필요한 물건을 이웃과 나누고, 수익을 창출할 수 있는 서비스입니다.
 
+## 🆕 최근 업데이트 (2025.12.03)
+
+### ✉️ 이메일 인증 시스템
+- **Gmail SMTP** 기반 이메일 발송
+- **6자리 인증번호** 입력 방식 (모바일 호환성 향상)
+- 회원가입 시 인증번호 발송
+- 프로필 페이지에서 미인증 사용자 인증 가능
+- 인증번호 재발송 기능 (60초 쿨다운)
+
+### 🛡️ 관리자 시스템
+- **관리자 대시보드** (`/admin`)
+- 사용자/상품/대여 통계 조회
+- 사용자 강제 탈퇴
+- 상품 강제 삭제
+- 대여 강제 취소
+- role 기반 권한 관리 (`user` / `admin`)
+
+### ⏰ 반납 지연 시스템
+- **자동 지연 체크** 스케줄러 (1시간마다)
+- **알림 발송**: 1일 전, 당일, 지연 후 매일
+- **지연 요금**: 일일 대여료의 **1.5배** × 지연일수
+- 메인 화면에 "🚨 반납 지연" 뱃지 표시
+- 달력에 지연 기간 빨간색 표시
+- 반납 시 지연 요금 안내 및 정산 포함
+
+### 🗑️ 계정 탈퇴 기능
+- 프로필 페이지에서 계정 삭제 가능
+- 비밀번호 확인 후 탈퇴
+- 관련 데이터 자동 삭제 (상품, 대여, 채팅, 알림)
+
+---
+
 ## 주요 기능
 
 ### 사용자 관리
 - 회원가입 및 로그인 (JWT 인증)
+- **이메일 인증** (6자리 코드)
 - 사용자 프로필 관리
+- **계정 탈퇴**
 - 평점 시스템 (1~5점)
 - 지역 기반 서비스
 
@@ -24,6 +58,8 @@
 - 대여 요청 및 승인
 - 대여 상태 관리 (대기/승인/진행중/완료/취소)
 - 대여 내역 조회 (빌린 것/빌려준 것)
+- **반납 지연 관리** - 지연 시 알림 및 추가 요금 (1.5배)
+- **지연 상태 표시** - 카드, 달력에 지연 표시
 
 ### 리뷰 시스템
 - 대여 완료 후 리뷰 작성
@@ -49,6 +85,7 @@
 - Socket.io (실시간 채팅)
 - Multer (파일 업로드)
 - bcryptjs (비밀번호 암호화)
+- **Nodemailer** (이메일 발송 - Gmail SMTP)
 
 ### 프론트엔드
 - React 18
@@ -70,14 +107,34 @@
 npm install
 ```
 
-2. 환경 변수 설정 (선택사항)
-`.env` 파일이 이미 생성되어 있습니다. 필요시 수정하세요:
-```
+2. 환경 변수 설정
+프로젝트 루트에 `.env` 파일을 생성하세요:
+
+```env
+# 서버 설정
 PORT=5000
+NODE_ENV=development
+
+# JWT 설정
 JWT_SECRET=your_jwt_secret_key_here
 JWT_EXPIRE=7d
-NODE_ENV=development
+
+# Gmail SMTP 설정 (이메일 인증용)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=인증메일발송용_이메일@gmail.com
+SMTP_PASS=해당계정의_앱비밀번호16자리
+
+# 클라이언트 URL
+CLIENT_URL=http://localhost:3000
 ```
+
+> 📌 **상세 설정 가이드**: `env파일생성요령.txt` 파일 참조
+> 
+> **Gmail 앱 비밀번호 발급 (간략)**
+> 1. [Google 계정](https://myaccount.google.com) → 보안 → 2단계 인증 활성화
+> 2. [앱 비밀번호](https://myaccount.google.com/apppasswords) → 앱 이름: ShareHub → 생성
+> 3. 표시된 16자리 비밀번호를 `SMTP_PASS`에 입력 (공백 없이)
 
 3. 자동으로 데이터베이스 파일 생성됨
 - `database/db.json` 파일에 모든 데이터가 JSON 형태로 저장됩니다
@@ -122,8 +179,11 @@ npm run dev:all
 ## API 엔드포인트
 
 ### 인증
-- `POST /api/auth/register` - 회원가입
+- `POST /api/auth/register` - 회원가입 (인증번호 발송)
 - `POST /api/auth/login` - 로그인
+- `POST /api/auth/verify-code` - 인증번호 확인
+- `POST /api/auth/resend-verification` - 인증번호 재발송
+- `DELETE /api/auth/delete-account` - 계정 탈퇴
 
 ### 사용자
 - `GET /api/users/me` - 현재 사용자 정보
@@ -154,26 +214,40 @@ npm run dev:all
 - `GET /api/reviews/user/:userId` - 사용자가 받은 리뷰
 - `GET /api/reviews/rental/:rentalId` - 대여 관련 리뷰
 
+### 관리자 (Admin Only)
+- `GET /api/admin/stats` - 대시보드 통계
+- `GET /api/admin/users` - 전체 사용자 목록
+- `DELETE /api/admin/users/:id` - 사용자 강제 탈퇴
+- `GET /api/admin/products` - 전체 상품 목록
+- `DELETE /api/admin/products/:id` - 상품 강제 삭제
+- `GET /api/admin/rentals` - 전체 대여 목록
+- `PUT /api/admin/rentals/:id/cancel` - 대여 강제 취소
+
 ## 프로젝트 구조
 
 ```
 sharehub/
 ├── server.js                 # 서버 진입점
 ├── package.json
-├── .env
+├── .env                      # 환경 변수 (직접 생성)
+├── env파일생성요령.txt        # .env 파일 생성 가이드
 ├── .gitignore
 ├── README.md
 ├── database/                 # 로컬 데이터베이스
 │   ├── db.js                # lowdb 설정
 │   └── db.json              # JSON 데이터 파일
 ├── routes/                   # API 라우트
-│   ├── auth.js
+│   ├── auth.js              # 인증 (로그인, 회원가입, 이메일 인증)
 │   ├── users.js
 │   ├── products.js
 │   ├── rentals.js
-│   └── reviews.js
+│   ├── reviews.js
+│   ├── notifications.js     # 알림 시스템
+│   └── admin.js             # 관리자 API
 ├── middleware/               # 미들웨어
-│   └── auth.js
+│   └── auth.js              # JWT 인증 + 관리자 권한 체크
+├── utils/                    # 유틸리티
+│   └── mailer.js            # 이메일 발송 (Nodemailer)
 ├── uploads/                  # 업로드된 파일
 └── client/                   # React 프론트엔드
     ├── public/
@@ -189,33 +263,64 @@ sharehub/
 
 ## 주요 화면
 
-1. **홈 화면** - 제품 목록, 검색, 필터링
-2. **로그인/회원가입** - 사용자 인증
-3. **제품 상세** - 제품 정보, 대여 요청, 채팅
+1. **홈 화면** - 제품 목록, 검색, 필터링, 지연 상태 표시
+2. **로그인/회원가입** - 사용자 인증, 이메일 인증
+3. **제품 상세** - 제품 정보, 대여 요청, 채팅, 예약 달력
 4. **제품 등록** - 새 제품 등록
 5. **내 물품** - 등록한 제품 관리
-6. **대여 내역** - 빌린/빌려준 제품 관리
-7. **프로필** - 사용자 프로필, 평점, 리뷰
+6. **대여 내역** - 빌린/빌려준 제품 관리, 지연 요금 표시
+7. **프로필** - 사용자 프로필, 평점, 리뷰, 이메일 인증, 계정 탈퇴
 8. **채팅** - 실시간 채팅
+9. **알림** - 대여/채팅/시스템 알림
+10. **🛡️ 관리자** - 대시보드, 사용자/상품/대여 관리 (관리자 전용)
 
 ## 보안
 
 - JWT 토큰 기반 인증
+- **이메일 인증** (6자리 코드, 만료 시간 적용)
 - 비밀번호 bcrypt 암호화
 - API 라우트 보호
+- **관리자 권한 체크** (role 기반)
 - 파일 업로드 검증
 - XSS 및 CSRF 방지
 
 ## 향후 개선 사항
 
 - [ ] MongoDB로 데이터베이스 전환 (필요시)
-- [ ] 결제 시스템 통합
-- [ ] 푸시 알림
+- [ ] 결제 시스템 통합 (실제 결제 연동)
+- [ ] 푸시 알림 (모바일)
 - [ ] 이미지 최적화 및 CDN
 - [ ] 모바일 앱 개발
-- [ ] 관리자 대시보드
+- [x] ~~관리자 대시보드~~ ✅ 완료
 - [ ] 고급 검색 필터
 - [ ] 제품 추천 알고리즘 개선
+- [x] ~~이메일 인증 시스템~~ ✅ 완료
+- [x] ~~반납 지연 관리~~ ✅ 완료
+- [x] ~~계정 탈퇴 기능~~ ✅ 완료
+
+## 관리자 계정 설정
+
+관리자 계정을 만들려면:
+
+1. 일반 회원가입으로 계정 생성
+2. `database/db.json` 파일 열기
+3. 해당 사용자에 `"role": "admin"` 추가:
+
+```json
+{
+  "id": "xxx",
+  "username": "관리자",
+  "email": "admin@example.com",
+  "role": "admin",    // ← 이 줄 추가
+  "password": "...",
+  ...
+}
+```
+
+4. 서버 재시작 (또는 로그아웃 후 재로그인)
+5. 네비게이션 바에 "🛡️ 관리자" 메뉴 표시됨
+
+---
 
 ## lowdb에서 MongoDB로 전환하기
 

@@ -26,13 +26,14 @@ router.get('/me', protect, async (req, res) => {
 // @access  Private
 router.put('/me', protect, async (req, res) => {
   try {
-    const { name, phone, regions, primaryRegion } = req.body;
+    const { name, phone, regions, primaryRegion, subRegion } = req.body;
     
     const updateData = {};
     if (name) updateData.name = name;
     if (phone) updateData.phone = phone;
     if (regions) updateData.regions = regions;
     if (primaryRegion) updateData.primaryRegion = primaryRegion;
+    if (subRegion !== undefined) updateData.subRegion = subRegion;
 
     db.get('users')
       .find({ id: req.user.id })

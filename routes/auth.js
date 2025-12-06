@@ -38,7 +38,7 @@ router.post('/register', [
   }
 
   try {
-    const { username, email, password, name, phone, primaryRegion, regions } = req.body;
+    const { username, email, password, name, phone, primaryRegion, subRegion, regions } = req.body;
 
     // 중복 확인
     const existingUser = db.get('users')
@@ -67,6 +67,7 @@ router.post('/register', [
       name,
       phone,
       primaryRegion,
+      subRegion: subRegion || '',
       regions: regions || [primaryRegion],
       profileImage: '',
       trustScore: 0,

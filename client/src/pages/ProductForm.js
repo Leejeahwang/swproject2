@@ -31,7 +31,8 @@ const ProductForm = () => {
     region: '',
     condition: '상'
   });
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState([]); // File 객체 배열
+  const [imagePreviews, setImagePreviews] = useState([]); // 미리보기 URL 배열
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,6 +42,15 @@ const ProductForm = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // 컴포넌트 언마운트 시 preview URL 정리
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [imagePreviews]);
 
   const loadProduct = async () => {
     try {
@@ -71,13 +81,53 @@ const ProductForm = () => {
     });
   };
 
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length > 5) {
-      alert('이미지는 최대 5개까지 업로드 가능합니다');
+  // 이미지 선택 핸들러 (단일 파일만)
+  const handleImageSelect = (index, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 선택 가능합니다');
       return;
     }
-    setImages(files);
+
+    // 이미지 배열 업데이트
+    const newImages = [...images];
+    const newPreviews = [...imagePreviews];
+
+    if (index < images.length) {
+      // 기존 이미지 교체
+      newImages[index] = file;
+      // 기존 preview URL 해제
+      if (newPreviews[index]) {
+        URL.revokeObjectURL(newPreviews[index]);
+      }
+      newPreviews[index] = URL.createObjectURL(file);
+    } else {
+      // 새 이미지 추가
+      newImages.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    }
+
+    setImages(newImages);
+    setImagePreviews(newPreviews);
+
+    // input 초기화 (같은 파일 다시 선택 가능하도록)
+    e.target.value = '';
+  };
+
+  // 이미지 삭제
+  const handleImageRemove = (index) => {
+    const newImages = images.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    
+    // 삭제된 preview URL 해제
+    if (imagePreviews[index]) {
+      URL.revokeObjectURL(imagePreviews[index]);
+    }
+    
+    setImages(newImages);
+    setImagePreviews(newPreviews);
   };
 
   const handleSubmit = async (e) => {
@@ -134,23 +184,53 @@ const ProductForm = () => {
           {!isEdit && (
             <div className="form-group">
               <label>제품 이미지 (최대 5개)</label>
-              <div className="file-input-wrapper">
-                <input
-                  type="file"
-                  id="file-upload"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageChange}
-                  required={!isEdit}
-                  className="hidden-file-input"
-                />
-                <label htmlFor="file-upload" className="file-upload-label btn">
-                  파일 선택
-                </label>
-                <span className="file-selected-text">
-                  {images.length > 0 ? `${images.length}개 파일 선택됨` : '선택된 파일 없음'}
-                </span>
+              <div className="image-upload-container">
+                {images.map((_, index) => (
+                  <div key={index} className="image-upload-slot">
+                    <div className="image-preview-wrapper">
+                      <img 
+                        src={imagePreviews[index]} 
+                        alt={`미리보기 ${index + 1}`}
+                        className="image-preview"
+                      />
+                      <button
+                        type="button"
+                        className="image-remove-btn"
+                        onClick={() => handleImageRemove(index)}
+                        aria-label="이미지 삭제"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {images.length < 5 && (
+                  <div className="image-upload-slot">
+                    <label className="image-upload-placeholder" htmlFor={`file-upload-${images.length}`}>
+                      {images.length === 0 ? (
+                        <>
+                          <span className="upload-icon">📷</span>
+                          <span className="upload-text">이미지 선택</span>
+                        </>
+                      ) : (
+                        <span className="upload-icon">+</span>
+                      )}
+                      <input
+                        type="file"
+                        id={`file-upload-${images.length}`}
+                        accept="image/*"
+                        onChange={(e) => handleImageSelect(images.length, e)}
+                        className="hidden-file-input"
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
+              {images.length > 0 && images.length < 5 && (
+                <div className="image-upload-hint">
+                  {images.length}개 선택됨 (최대 5개까지 가능)
+                </div>
+              )}
             </div>
           )}
 
@@ -260,4 +340,3 @@ const ProductForm = () => {
 };
 
 export default ProductForm;
-

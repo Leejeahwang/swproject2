@@ -17,6 +17,10 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.auth-card-wide {
+  max-width: 580px;
+}
+
 .auth-card:hover {
   transform: translateY(-6px);
   box-shadow: var(--box-shadow-hover);
@@ -81,6 +85,145 @@
 @media (max-width: 768px) {
   .auth-card {
     padding: 30px 20px;
+  }
+}
+
+/* 지도 기반 지역 선택 스타일 */
+.region-selection-section {
+  margin-top: 10px;
+}
+
+.region-label-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 15px;
+}
+
+.region-hint {
+  font-size: 12px;
+  color: #888;
+  font-weight: 400;
+}
+
+.region-selection-container {
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 20px;
+  padding: 25px 20px 35px;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.region-selection-container:hover {
+  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+}
+
+.sub-region-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px dashed rgba(102, 126, 234, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sub-region-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.sub-region-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: #888;
+}
+
+.sub-region-select {
+  width: 100%;
+  padding: 14px 16px;
+  padding-right: 45px;
+  border: 1px solid rgba(192, 209, 225, 0.15);
+  border-radius: var(--border-radius);
+  font-size: 15px;
+  color: var(--dark-color);
+  background: var(--bg-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  appearance: none;
+  box-shadow: var(--box-shadow-inset);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  font-weight: 500;
+}
+
+.sub-region-select:hover {
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: var(--box-shadow-inset), 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.sub-region-select:focus {
+  outline: none;
+  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: var(--box-shadow-inset), 0 0 0 4px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+.sub-region-select:active {
+  transform: translateY(0);
+  box-shadow: var(--box-shadow-pressed);
+}
+
+/* 드롭다운 옵션 스타일링 (제한적) */
+.sub-region-select option {
+  background: var(--bg-color);
+  color: var(--dark-color);
+  padding: 12px;
+  font-weight: 500;
+}
+
+.sejong-notice {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #e6f3ff 0%, #f0f7ff 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 12px;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  margin: 0;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 480px) {
+  .auth-card-wide {
+    max-width: 100%;
+  }
+  
+  .region-selection-container {
+    padding: 15px 12px 25px;
+  }
+  
+  .sub-region-select {
+    padding: 12px 14px;
+    font-size: 14px;
   }
 }
 

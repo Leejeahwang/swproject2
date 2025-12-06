@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import CustomSelect from '../components/CustomSelect';
+import { useAuth } from '../context/AuthContext';
+import { REGION_CODES } from '../components/KoreaMap';
 import './Home.css';
 
 const CATEGORIES = [
@@ -15,12 +17,30 @@ const REGIONS = [
 ];
 
 const Home = () => {
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('전체');
   const [region, setRegion] = useState('전체');
   const [sortBy, setSortBy] = useState('latest');
+
+  // 사용자의 주 지역을 간략한 이름으로 변환
+  const getUserRegionCode = () => {
+    if (!user?.primaryRegion) return null;
+    // 정식 명칭이면 코드로 변환, 아니면 그대로 사용
+    return REGION_CODES[user.primaryRegion] || user.primaryRegion;
+  };
+
+  const userRegionCode = getUserRegionCode();
+
+  // 지역 옵션 생성 (내지역 표시 추가)
+  const regionOptions = REGIONS.map(reg => ({
+    value: reg,
+    label: reg === '전체' 
+      ? reg 
+      : (reg === userRegionCode ? `${reg} (내지역)` : reg)
+  }));
 
   useEffect(() => {
     loadProducts();
@@ -72,7 +92,7 @@ const Home = () => {
 
       <form onSubmit={handleSearch} className="search-bar">
         <CustomSelect
-          options={REGIONS.map(reg => ({ value: reg, label: reg }))}
+          options={regionOptions}
           value={region}
           onChange={(value) => setRegion(value)}
           placeholder="지역"

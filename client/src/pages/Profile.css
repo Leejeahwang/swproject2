@@ -504,12 +504,12 @@
 .stat-value.rating-value {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .stat-value.rating-value .soft-star-icon {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
 }
 
 .stat-value.trust-score {

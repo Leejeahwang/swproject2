@@ -22,9 +22,33 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: '완료된 대여만 리뷰를 작성할 수 있습니다' });
     }
 
-    let reviewee;
-    if (type === 'owner') {
-      // 대여자가 빌린 사람 평가
+    let reviewee = null;
+    
+    if (type === 'product') {
+      // 빌린 사람이 제품 자체에 대한 리뷰 작성
+      // 제품 리뷰 점수는 소유자(빌려준 사람) 평점에도 반영됨
+      if (rental.borrower !== req.user.id) {
+        return res.status(403).json({ message: '제품 리뷰는 빌린 사람만 작성할 수 있습니다' });
+      }
+
+      // 제품 리뷰 중복 확인
+      const existingProductReview = db.get('reviews')
+        .find({ rental: rentalId, type: 'product' })
+        .value();
+      if (existingProductReview) {
+        return res.status(400).json({ message: '이미 제품 리뷰를 작성하셨습니다' });
+      }
+
+      // 제품 리뷰는 소유자 평점에 반영되므로 reviewee를 소유자로 설정
+      reviewee = rental.owner;
+
+      db.get('rentals')
+        .find({ id: rentalId })
+        .assign({ productReviewed: true })
+        .write();
+        
+    } else if (type === 'owner') {
+      // 소유자가 빌린 사람 평가
       if (rental.owner !== req.user.id) {
         return res.status(403).json({ message: '리뷰 작성 권한이 없습니다' });
       }
@@ -32,7 +56,7 @@ router.post('/', protect, async (req, res) => {
 
       // 중복 확인
       const existingReview = db.get('reviews')
-        .find({ rental: rentalId, reviewer: req.user.id })
+        .find({ rental: rentalId, type: 'owner' })
         .value();
       if (existingReview) {
         return res.status(400).json({ message: '이미 리뷰를 작성하셨습니다' });
@@ -43,7 +67,7 @@ router.post('/', protect, async (req, res) => {
         .assign({ ownerReviewed: true })
         .write();
     } else if (type === 'borrower') {
-      // 빌린 사람이 대여자 평가
+      // 빌린 사람이 소유자 평가
       if (rental.borrower !== req.user.id) {
         return res.status(403).json({ message: '리뷰 작성 권한이 없습니다' });
       }
@@ -51,7 +75,7 @@ router.post('/', protect, async (req, res) => {
 
       // 중복 확인
       const existingReview = db.get('reviews')
-        .find({ rental: rentalId, reviewer: req.user.id })
+        .find({ rental: rentalId, type: 'borrower' })
         .value();
       if (existingReview) {
         return res.status(400).json({ message: '이미 리뷰를 작성하셨습니다' });
@@ -82,22 +106,30 @@ router.post('/', protect, async (req, res) => {
 
     db.get('reviews').push(review).write();
 
-    // 평가 받은 사용자의 평균 평점 업데이트
-    const reviews = db.get('reviews').filter({ reviewee: reviewee }).value();
-    const avgRating = reviews.reduce((acc, rev) => acc + rev.rating, 0) / reviews.length;
-    
-    db.get('users')
-      .find({ id: reviewee })
-      .assign({ averageRating: avgRating })
-      .write();
+    // reviewee가 있는 경우 평균 평점 업데이트 및 알림
+    // (제품 리뷰 → 소유자 평점, 대여자 리뷰 → 대여자 평점)
+    if (reviewee) {
+      const userReviews = db.get('reviews').filter({ reviewee: reviewee }).value();
+      const avgRating = userReviews.reduce((acc, rev) => acc + rev.rating, 0) / userReviews.length;
+      
+      db.get('users')
+        .find({ id: reviewee })
+        .assign({ averageRating: avgRating })
+        .write();
 
-    // 리뷰 받은 사람에게 알림 생성
-    createNotification(
-      reviewee,
-      'review',
-      `${req.user.username}님이 리뷰를 작성했습니다 (${rating}점)`,
-      `/profile/${reviewee}`
-    );
+      // 리뷰 받은 사람에게 알림 생성
+      const product = db.get('products').find({ id: rental.product }).value();
+      const notificationMessage = type === 'product'
+        ? `${req.user.username}님이 "${product?.title || '제품'}" 리뷰를 작성했습니다 (${rating}점)`
+        : `${req.user.username}님이 리뷰를 작성했습니다 (${rating}점)`;
+      
+      createNotification(
+        reviewee,
+        'review',
+        notificationMessage,
+        type === 'product' ? `/products/${rental.product}` : `/profile/${reviewee}`
+      );
+    }
 
     // 관련 정보 추가해서 반환
     const reviewer = db.get('users').find({ id: review.reviewer }).value();
@@ -169,19 +201,19 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // @route   GET /api/reviews/product/:productId
-// @desc    특정 제품의 리뷰 목록
+// @desc    특정 제품의 리뷰 목록 (제품 리뷰만 - type: 'product')
 // @access  Public
 router.get('/product/:productId', async (req, res) => {
   try {
+    // 제품 리뷰(type: 'product')만 필터링
     let reviews = db.get('reviews')
-      .filter({ product: req.params.productId })
+      .filter({ product: req.params.productId, type: 'product' })
       .orderBy(['createdAt'], ['desc'])
       .value();
 
     // 관련 정보 추가
     reviews = reviews.map(review => {
       const reviewer = db.get('users').find({ id: review.reviewer }).value();
-      const reviewee = db.get('users').find({ id: review.reviewee }).value();
       
       return {
         ...review,
@@ -190,11 +222,6 @@ router.get('/product/:productId', async (req, res) => {
           username: reviewer.username,
           profileImage: reviewer.profileImage,
           averageRating: reviewer.averageRating || 0
-        } : null,
-        reviewee: reviewee ? {
-          id: reviewee.id,
-          username: reviewee.username,
-          averageRating: reviewee.averageRating || 0
         } : null
       };
     });

@@ -427,7 +427,7 @@ const Profile = () => {
                           <div className="reviewer-info">
                             <strong>{review.reviewer.username}</strong>
                             <span className="review-rating soft-star-badge">
-                              <span className="soft-star-mini">⭐</span> {review.rating.toFixed(1)}
+                              <span className="soft-star-mini"></span> {review.rating.toFixed(1)}
                             </span>
                           </div>
                           <span className="review-date">

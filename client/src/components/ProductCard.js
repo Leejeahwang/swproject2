@@ -1,16 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './ProductCard.css';
 
 const ProductCard = ({ product }) => {
+  const { user } = useAuth();
+  
+  // 관련자 여부 확인 (소유자 또는 현재 대여자)
+  const isRelatedUser = user && (
+    user.id === product.owner?.id || 
+    user.id === product.currentBorrowerId
+  );
+
   const getStatusBadge = () => {
-    // 지연 상태 우선 표시
+    // 지연 상태일 때
     if (product.isOverdue) {
-      return (
-        <span className="status-badge overdue">
-          🚨 반납 지연 {product.overdueDays}일
-        </span>
-      );
+      // 관련자(소유자/대여자)에게는 강렬한 표시
+      if (isRelatedUser) {
+        return (
+          <span className="status-badge overdue">
+            🚨 반납 지연 {product.overdueDays}일
+          </span>
+        );
+      }
+      // 제3자에게는 온건한 표시 (그냥 대여중으로 표시)
+      return <span className="status-badge rented">대여중</span>;
     }
     
     switch(product.status) {
@@ -27,7 +41,8 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link to={`/products/${product.id || product._id}`} className="product-card-link">
-      <div className={`product-card ${product.status === 'rented' ? 'rented' : ''} ${product.isOverdue ? 'overdue' : ''}`}>
+      {/* 관련자에게만 overdue 스타일(빨간 테두리 등) 적용 */}
+      <div className={`product-card ${product.status === 'rented' ? 'rented' : ''} ${product.isOverdue && isRelatedUser ? 'overdue' : ''}`}>
         <div className="product-image-container">
           <img 
             src={`http://localhost:5000${product.images[0]}`} 

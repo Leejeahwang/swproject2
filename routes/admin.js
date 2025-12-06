@@ -249,3 +249,4 @@ router.put('/rentals/:id/cancel', (req, res) => {
 
 module.exports = router;
 
+

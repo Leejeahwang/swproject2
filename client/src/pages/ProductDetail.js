@@ -39,7 +39,7 @@ const ProductDetail = () => {
   useEffect(() => {
     loadProduct();
     loadReservedDates();
-    loadReviews();
+    loadProductReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -71,7 +71,7 @@ const ProductDetail = () => {
     }
   };
 
-  const loadReviews = async () => {
+  const loadProductReviews = async () => {
     try {
       const response = await api.get(`/reviews/product/${id}`);
       setReviews(response.data.reviews || []);
@@ -80,8 +80,21 @@ const ProductDetail = () => {
         totalReviews: response.data.totalReviews || 0
       });
     } catch (error) {
-      console.error('리뷰 로드 실패:', error);
+      console.error('제품 리뷰 로드 실패:', error);
     }
+  };
+
+  // 별점 렌더링 함수
+  const renderStars = (rating) => {
+    return (
+      <div className="stars">
+        {[1, 2, 3, 4, 5].map(star => (
+          <span key={star} className={`star ${star <= rating ? 'filled' : ''}`}>
+            <span className="soft-star-mini"></span>
+          </span>
+        ))}
+      </div>
+    );
   };
 
   // 날짜가 예약된 범위에 포함되는지 확인
@@ -131,19 +144,6 @@ const ProductDetail = () => {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [showImageModal]);
-
-  // 별점 렌더링 함수
-  const renderStars = (rating) => {
-    return (
-      <div className="stars">
-        {[1, 2, 3, 4, 5].map(star => (
-          <span key={star} className={`star ${star <= rating ? 'filled' : ''}`}>
-            <span className="soft-star-mini"></span>
-          </span>
-        ))}
-      </div>
-    );
-  };
 
   const handleLike = async () => {
     if (!user) {
@@ -446,10 +446,10 @@ const ProductDetail = () => {
         <p className="description">{product.description}</p>
       </div>
 
-      {/* 리뷰 섹션 */}
+      {/* 제품 리뷰 섹션 */}
       <div className="reviews-section">
         <div className="reviews-header">
-          <h2><span className="soft-star-mini"></span> 제품 리뷰 ({reviewStats.totalReviews})</h2>
+          <h2>📦 제품 리뷰 ({reviewStats.totalReviews})</h2>
           {reviewStats.totalReviews > 0 && (
             <div className="review-summary">
               <span className="average-rating">{reviewStats.averageRating.toFixed(1)}</span>
@@ -461,8 +461,8 @@ const ProductDetail = () => {
 
         {reviews.length === 0 ? (
           <div className="no-reviews">
-            <p>아직 작성된 리뷰가 없습니다.</p>
-            <p className="no-reviews-sub">첫 번째 리뷰를 남겨보세요!</p>
+            <p>아직 작성된 제품 리뷰가 없습니다.</p>
+            <p className="no-reviews-sub">이 제품을 대여해보시고 리뷰를 남겨주세요!</p>
           </div>
         ) : (
           <div className="reviews-list">
@@ -486,13 +486,6 @@ const ProductDetail = () => {
                 </div>
                 {review.comment && (
                   <p className="review-comment">{review.comment}</p>
-                )}
-                {review.reviewee && (
-                  <div className="review-about">
-                    <Link to={`/profile/${review.reviewee.id}`} className="reviewee-link">
-                      {review.reviewee.username}님에 대한 리뷰
-                    </Link>
-                  </div>
                 )}
               </div>
             ))}

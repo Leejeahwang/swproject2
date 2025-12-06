@@ -218,13 +218,13 @@
   color: #666 !important;
 }
 
-.star-rating {
+.my-rentals-page .star-rating {
   display: flex;
   gap: 12px;
   margin: 10px 0;
 }
 
-.rating-star {
+.my-rentals-page .rating-star {
   width: 40px;
   height: 40px;
   cursor: pointer;
@@ -233,31 +233,33 @@
   position: relative;
 }
 
-.rating-star .star-icon {
+.my-rentals-page .rating-star .star-icon {
   display: block;
   width: 100%;
   height: 100%;
-  background-color: #d1d9e6;
+  background: var(--primary-color) !important;
   -webkit-mask: var(--star-mask) no-repeat center / contain;
   mask: var(--star-mask) no-repeat center / contain;
   transition: all 0.2s ease;
   filter: 
     drop-shadow(2px 2px 3px rgba(163, 177, 198, 0.5)) 
     drop-shadow(-2px -2px 3px rgba(255, 255, 255, 0.8));
+  opacity: 0.4;
 }
 
-.rating-star:active {
+.my-rentals-page .rating-star:active {
   transform: scale(0.95);
 }
 
-.rating-star.active .star-icon {
-  background: linear-gradient(145deg, #4fc3f7, #0288d1);
+.my-rentals-page .rating-star.active .star-icon {
+  background: linear-gradient(145deg, #4fc3f7, #0288d1) !important;
+  opacity: 1;
   filter: 
     drop-shadow(4px 4px 8px rgba(163, 177, 198, 0.6)) 
     drop-shadow(-4px -4px 8px rgba(255, 255, 255, 0.9));
 }
 
-.rating-star:hover {
+.my-rentals-page .rating-star:hover {
   transform: translateY(-2px);
 }
 

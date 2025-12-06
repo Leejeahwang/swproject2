@@ -88,13 +88,18 @@ router.get('/', async (req, res) => {
       
       let isOverdue = false;
       let overdueDays = 0;
+      let currentBorrowerId = null;  // 현재 대여자 ID
       
-      if (activeRental && activeRental.endDate) {
-        const endDate = new Date(activeRental.endDate);
-        endDate.setHours(0, 0, 0, 0);
-        if (today > endDate) {
-          isOverdue = true;
-          overdueDays = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+      if (activeRental) {
+        currentBorrowerId = activeRental.borrower;  // 대여자 ID 저장
+        
+        if (activeRental.endDate) {
+          const endDate = new Date(activeRental.endDate);
+          endDate.setHours(0, 0, 0, 0);
+          if (today > endDate) {
+            isOverdue = true;
+            overdueDays = Math.floor((today - endDate) / (1000 * 60 * 60 * 24));
+          }
         }
       }
       
@@ -102,6 +107,7 @@ router.get('/', async (req, res) => {
         ...product,
         isOverdue,
         overdueDays,
+        currentBorrowerId,  // 현재 대여자 ID 포함
         owner: owner ? {
           id: owner.id,
           username: owner.username,

@@ -234,14 +234,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
-.modal-content {
+.product-detail .modal-content {
   background: var(--bg-color);
   padding: 30px;
   border-radius: var(--border-radius);
@@ -249,8 +250,8 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(192, 209, 225, 0.15);
+  box-shadow: none !important;
+  border: 1px solid rgba(192, 209, 225, 0.3);
 }
 
 /* 모달 스크롤바 커스터마이징 - Neumorphism */
@@ -742,13 +743,13 @@
 }
 
 .reserved-dates-warning li {
-  padding: 6px 10px;
-  background: var(--bg-color);
-  border-radius: 4px;
+  padding: 8px 12px;
+  background: #fff3e0;
+  border-radius: 6px;
   margin-bottom: 6px;
   font-size: 0.9rem;
   color: #d84315;
-  box-shadow: var(--box-shadow);
+  box-shadow: -4px -4px 8px rgba(255, 255, 255, 0.6), 4px 4px 8px rgba(255, 152, 0, 0.25);
 }
 
 /* 결제 ?�션 ?��???*/

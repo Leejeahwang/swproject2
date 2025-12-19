@@ -176,16 +176,16 @@
   background: linear-gradient(145deg, #ff6b6b, #ff8787);
   color: #fff;
   border-radius: 50%;
-  min-width: 20px;
-  height: 20px;
+  min-width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   padding: 2px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: var(--box-shadow);
+  box-shadow: none; /* 그림자 제거 - 어두운 배경에서 하얀 그림자 문제 해결 */
 }
 
 @media (max-width: 768px) {

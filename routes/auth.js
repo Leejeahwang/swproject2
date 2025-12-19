@@ -7,6 +7,7 @@ const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
 const { sendVerificationCode } = require('../utils/mailer');
+const { sendVerificationCode: sendSMSVerificationCode } = require('../utils/sms');
 const { protect } = require('../middleware/auth');
 
 // JWT 토큰 생성
@@ -151,6 +152,120 @@ router.post('/verify-code', [
     res.json({ 
       success: true, 
       message: '이메일 인증이 완료되었습니다!' 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '인증 처리 중 오류가 발생했습니다', error: error.message });
+  }
+});
+
+// @route   POST /api/auth/send-sms-code
+// @desc    SMS 인증번호 발송
+// @access  Public
+router.post('/send-sms-code', [
+  body('phone').notEmpty().withMessage('전화번호를 입력해주세요')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { phone } = req.body;
+
+    // 전화번호 형식 검증 (간단한 검증)
+    const phoneRegex = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
+    if (!phoneRegex.test(phone.replace(/-/g, ''))) {
+      return res.status(400).json({ message: '유효한 전화번호 형식이 아닙니다' });
+    }
+
+    // 6자리 인증번호 생성
+    const verificationCode = generateVerificationCode();
+    const hashedCode = crypto.createHash('sha256').update(verificationCode).digest('hex');
+    const verificationExpires = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10분
+
+    // 사용자 찾기 (전화번호로)
+    let user = db.get('users').find({ phone }).value();
+
+    if (!user) {
+      return res.status(404).json({ message: '등록되지 않은 전화번호입니다' });
+    }
+
+    // SMS 인증번호 저장
+    db.get('users')
+      .find({ id: user.id })
+      .assign({
+        smsVerificationCode: hashedCode,
+        smsVerificationExpires: verificationExpires
+      })
+      .write();
+
+    // SMS 발송
+    const smsResult = await sendSMSVerificationCode(phone, verificationCode);
+
+    if (!smsResult.success) {
+      return res.status(500).json({ message: 'SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'SMS 인증번호가 발송되었습니다. 문자를 확인해주세요.',
+      phoneSent: smsResult.success
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'SMS 발송 중 오류가 발생했습니다', error: error.message });
+  }
+});
+
+// @route   POST /api/auth/verify-sms-code
+// @desc    SMS 인증번호 확인
+// @access  Public
+router.post('/verify-sms-code', [
+  body('phone').notEmpty().withMessage('전화번호를 입력해주세요'),
+  body('code').isLength({ min: 6, max: 6 }).withMessage('6자리 인증번호를 입력해주세요')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { phone, code } = req.body;
+    const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
+    
+    const user = db.get('users')
+      .find(u => u.phone === phone && u.smsVerificationCode === hashedCode)
+      .value();
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '인증번호가 올바르지 않습니다.' 
+      });
+    }
+
+    // 만료 확인
+    if (new Date(user.smsVerificationExpires) < new Date()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: '인증번호가 만료되었습니다. 다시 발송해주세요.' 
+      });
+    }
+    
+    // 사용자 SMS 인증 완료 처리
+    db.get('users')
+      .find({ id: user.id })
+      .assign({ 
+        phoneVerified: true, 
+        smsVerificationCode: null, 
+        smsVerificationExpires: null 
+      })
+      .write();
+    
+    res.json({ 
+      success: true, 
+      message: 'SMS 인증이 완료되었습니다!' 
     });
   } catch (error) {
     console.error(error);

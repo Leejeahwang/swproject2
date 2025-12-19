@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, upload } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../database/db');
 const { createNotification } = require('./notifications');
@@ -547,6 +547,92 @@ router.put('/:id/start', protect, async (req, res) => {
     res.json({ success: true, rental: updatedRental });
   } catch (error) {
     res.status(500).json({ message: '대여 시작 실패', error: error.message });
+  }
+});
+
+// @route   PUT /api/rentals/:id/before-images
+// @desc    대여 시작 전 이미지 업로드
+// @access  Private
+router.put('/:id/before-images', protect, upload.array('images', 5), async (req, res) => {
+  try {
+    const rental = db.get('rentals').find({ id: req.params.id }).value();
+
+    if (!rental) {
+      return res.status(404).json({ message: '대여 정보를 찾을 수 없습니다' });
+    }
+
+    // 권한 확인 (소유자 또는 대여자)
+    if (rental.owner !== req.user.id && rental.borrower !== req.user.id) {
+      return res.status(403).json({ message: '이미지 업로드 권한이 없습니다' });
+    }
+
+    // ongoing 상태에서만 업로드 가능
+    if (rental.status !== 'ongoing' && rental.status !== 'approved') {
+      return res.status(400).json({ message: '진행 중인 대여만 이미지를 업로드할 수 있습니다' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: '최소 1개의 이미지를 업로드해주세요' });
+    }
+
+    const images = req.files.map(file => `/uploads/${file.filename}`);
+
+    db.get('rentals')
+      .find({ id: req.params.id })
+      .assign({ 
+        beforeImages: images,
+        beforeImagesUploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+
+    const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    res.json({ success: true, rental: updatedRental });
+  } catch (error) {
+    res.status(500).json({ message: '이미지 업로드 실패', error: error.message });
+  }
+});
+
+// @route   PUT /api/rentals/:id/after-images
+// @desc    반납 시 이미지 업로드
+// @access  Private
+router.put('/:id/after-images', protect, upload.array('images', 5), async (req, res) => {
+  try {
+    const rental = db.get('rentals').find({ id: req.params.id }).value();
+
+    if (!rental) {
+      return res.status(404).json({ message: '대여 정보를 찾을 수 없습니다' });
+    }
+
+    // 권한 확인 (소유자 또는 대여자)
+    if (rental.owner !== req.user.id && rental.borrower !== req.user.id) {
+      return res.status(403).json({ message: '이미지 업로드 권한이 없습니다' });
+    }
+
+    // returning 상태에서만 업로드 가능
+    if (rental.status !== 'returning' && rental.status !== 'ongoing') {
+      return res.status(400).json({ message: '반납 대기 중이거나 진행 중인 대여만 이미지를 업로드할 수 있습니다' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: '최소 1개의 이미지를 업로드해주세요' });
+    }
+
+    const images = req.files.map(file => `/uploads/${file.filename}`);
+
+    db.get('rentals')
+      .find({ id: req.params.id })
+      .assign({ 
+        afterImages: images,
+        afterImagesUploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .write();
+
+    const updatedRental = db.get('rentals').find({ id: req.params.id }).value();
+    res.json({ success: true, rental: updatedRental });
+  } catch (error) {
+    res.status(500).json({ message: '이미지 업로드 실패', error: error.message });
   }
 });
 

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import KoreaMap, { REGION_NAMES } from '../components/KoreaMap';
+import KoreaMap from '../components/KoreaMap';
 import CustomSelect from '../components/CustomSelect';
 import './Auth.css';
 

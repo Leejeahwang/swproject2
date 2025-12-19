@@ -12,6 +12,7 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
   const [rentals, setRentals] = useState([]);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
@@ -46,6 +47,9 @@ const Admin = () => {
       } else if (activeTab === 'rentals') {
         const response = await api.get('/admin/rentals');
         setRentals(response.data.rentals);
+      } else if (activeTab === 'reports') {
+        const response = await api.get('/admin/reports');
+        setReports(response.data.reports);
       }
     } catch (err) {
       console.error('데이터 로드 실패:', err);
@@ -117,6 +121,78 @@ const Admin = () => {
     }
   };
 
+  // 신고 처리
+  const handleProcessReport = async (reportId, status) => {
+    const statusText = status === 'approved' ? '승인' : '거절';
+    if (!window.confirm(`이 신고를 ${statusText}하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setActionLoading(reportId);
+      await api.put(`/admin/reports/${reportId}/process`, { status });
+      setReports(reports.map(r => 
+        r.id === reportId ? { ...r, status } : r
+      ));
+      alert(`신고가 ${statusText}되었습니다`);
+    } catch (err) {
+      alert(err.response?.data?.message || '신고 처리 실패');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 사용자 차단
+  const handleBlockUser = async (userId, username) => {
+    const blockDays = prompt(`${username}님을 몇 일간 차단하시겠습니까? (1~30일)`);
+    if (!blockDays || isNaN(blockDays) || blockDays < 1 || blockDays > 30) {
+      return;
+    }
+
+    const reason = prompt('차단 사유를 입력해주세요:') || '관리자에 의한 차단';
+
+    try {
+      setActionLoading(`block-${userId}`);
+      await api.put(`/admin/users/${userId}/block`, { blockDays: parseInt(blockDays), reason });
+      setUsers(users.map(u => 
+        u.id === userId ? { 
+          ...u, 
+          blockedUntil: new Date(Date.now() + parseInt(blockDays) * 24 * 60 * 60 * 1000).toISOString(),
+          blockReason: reason
+        } : u
+      ));
+      alert(`${username}님이 ${blockDays}일간 차단되었습니다`);
+    } catch (err) {
+      alert(err.response?.data?.message || '사용자 차단 실패');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 사용자 차단 해제
+  const handleUnblockUser = async (userId) => {
+    if (!window.confirm('이 사용자의 차단을 해제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      setActionLoading(`unblock-${userId}`);
+      await api.put(`/admin/users/${userId}/unblock`);
+      setUsers(users.map(u => 
+        u.id === userId ? { 
+          ...u, 
+          blockedUntil: null,
+          blockReason: null
+        } : u
+      ));
+      alert('차단이 해제되었습니다');
+    } catch (err) {
+      alert(err.response?.data?.message || '차단 해제 실패');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // 대여 상태 한글 변환
   const getRentalStatusText = (status) => {
     const statusMap = {
@@ -174,6 +250,12 @@ const Admin = () => {
         >
           🔄 대여
         </button>
+        <button 
+          className={`admin-tab ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reports')}
+        >
+          🚨 신고
+        </button>
       </div>
 
       {error && <div className="admin-error">{error}</div>}
@@ -230,6 +312,7 @@ const Admin = () => {
                       <th>지역</th>
                       <th>역할</th>
                       <th>인증</th>
+                      <th>상태</th>
                       <th>가입일</th>
                       <th>액션</th>
                     </tr>
@@ -250,16 +333,47 @@ const Admin = () => {
                             {u.isVerified !== false ? '✓' : '✗'}
                           </span>
                         </td>
+                        <td>
+                          {u.blockedUntil && new Date(u.blockedUntil) > new Date() ? (
+                            <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                              차단됨 ({Math.ceil((new Date(u.blockedUntil) - new Date()) / (1000 * 60 * 60 * 24))}일 남음)
+                            </span>
+                          ) : (
+                            <span style={{ color: '#10b981' }}>정상</span>
+                          )}
+                        </td>
                         <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td>
                           {u.role !== 'admin' && (
-                            <button 
-                              className="btn-action btn-danger"
-                              onClick={() => handleDeleteUser(u.id, u.username)}
-                              disabled={actionLoading === u.id}
-                            >
-                              {actionLoading === u.id ? '...' : '삭제'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                              {u.blockedUntil && new Date(u.blockedUntil) > new Date() ? (
+                                <button 
+                                  className="btn-action btn-success"
+                                  onClick={() => handleUnblockUser(u.id)}
+                                  disabled={actionLoading === `unblock-${u.id}`}
+                                  style={{ fontSize: '12px', padding: '5px 10px' }}
+                                >
+                                  {actionLoading === `unblock-${u.id}` ? '...' : '차단 해제'}
+                                </button>
+                              ) : (
+                                <button 
+                                  className="btn-action btn-warning"
+                                  onClick={() => handleBlockUser(u.id, u.username)}
+                                  disabled={actionLoading === `block-${u.id}`}
+                                  style={{ fontSize: '12px', padding: '5px 10px' }}
+                                >
+                                  {actionLoading === `block-${u.id}` ? '...' : '차단'}
+                                </button>
+                              )}
+                              <button 
+                                className="btn-action btn-danger"
+                                onClick={() => handleDeleteUser(u.id, u.username)}
+                                disabled={actionLoading === u.id}
+                                style={{ fontSize: '12px', padding: '5px 10px' }}
+                              >
+                                {actionLoading === u.id ? '...' : '삭제'}
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -354,6 +468,84 @@ const Admin = () => {
                 </table>
               </div>
             )}
+
+            {/* 신고 관리 */}
+            {activeTab === 'reports' && (
+              <div className="admin-table-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>신고 유형</th>
+                      <th>대상</th>
+                      <th>신고자</th>
+                      <th>사유</th>
+                      <th>상태</th>
+                      <th>신고일</th>
+                      <th>액션</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reports.map(r => (
+                      <tr key={r.id}>
+                        <td>
+                          {r.type === 'no_show' ? '노쇼' : r.type === 'fake_product' ? '허위매물' : '기타'}
+                        </td>
+                        <td>
+                          {r.targetType === 'product' && r.targetInfo && (
+                            <span>제품: {r.targetInfo.title || '삭제됨'}</span>
+                          )}
+                          {r.targetType === 'rental' && r.targetInfo && (
+                            <span>대여: {r.targetInfo.productTitle || '삭제됨'}</span>
+                          )}
+                          {r.targetType === 'user' && r.targetInfo && (
+                            <span>사용자: {r.targetInfo.username || '삭제됨'}</span>
+                          )}
+                        </td>
+                        <td>{r.reporterUsername}</td>
+                        <td>{r.reason}</td>
+                        <td>
+                          <span className={`status-badge ${
+                            r.status === 'approved' ? 'status-success' : 
+                            r.status === 'rejected' ? 'status-danger' : 
+                            'status-warning'
+                          }`}>
+                            {r.status === 'pending' ? '대기중' : r.status === 'approved' ? '승인' : '거절'}
+                          </span>
+                        </td>
+                        <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          {r.status === 'pending' && (
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button 
+                                className="btn-action btn-success"
+                                onClick={() => handleProcessReport(r.id, 'approved')}
+                                disabled={actionLoading === r.id}
+                                style={{ fontSize: '12px', padding: '5px 10px' }}
+                              >
+                                승인
+                              </button>
+                              <button 
+                                className="btn-action btn-danger"
+                                onClick={() => handleProcessReport(r.id, 'rejected')}
+                                disabled={actionLoading === r.id}
+                                style={{ fontSize: '12px', padding: '5px 10px' }}
+                              >
+                                거절
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {reports.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+                    신고 내역이 없습니다
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -362,6 +554,7 @@ const Admin = () => {
 };
 
 export default Admin;
+
 
 
 

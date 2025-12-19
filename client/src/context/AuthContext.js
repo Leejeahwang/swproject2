@@ -109,6 +109,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // SMS 인증번호 발송
+  const sendSMSCode = async (phone) => {
+    try {
+      const response = await api.post('/auth/send-sms-code', { phone });
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'SMS 발송에 실패했습니다'
+      };
+    }
+  };
+
+  // SMS 인증번호 확인
+  const verifySMSCode = async (phone, code) => {
+    try {
+      const response = await api.post('/auth/verify-sms-code', { phone, code });
+      if (response.data.success) {
+        // 인증 완료 후 사용자 정보 갱신
+        await loadUser();
+      }
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || '인증에 실패했습니다'
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -142,6 +172,8 @@ export const AuthProvider = ({ children }) => {
     loadUser,
     resendVerification,
     verifyCode,
+    sendSMSCode,
+    verifySMSCode,
     deleteAccount
   };
 

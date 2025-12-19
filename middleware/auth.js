@@ -25,6 +25,32 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ message: '사용자를 찾을 수 없습니다' });
     }
 
+    // 차단된 사용자 확인
+    if (user.blockedUntil) {
+      const blockedUntil = new Date(user.blockedUntil);
+      const now = new Date();
+      
+      if (now < blockedUntil) {
+        const daysLeft = Math.ceil((blockedUntil - now) / (1000 * 60 * 60 * 24));
+        return res.status(403).json({ 
+          message: `계정이 차단되었습니다. ${daysLeft}일 후 해제됩니다.`,
+          blockedUntil: user.blockedUntil,
+          blockReason: user.blockReason
+        });
+      } else {
+        // 차단 기간이 지났으면 차단 해제
+        db.get('users')
+          .find({ id: user.id })
+          .assign({
+            blockedUntil: null,
+            blockReason: null,
+            blockedAt: null,
+            blockedBy: null
+          })
+          .write();
+      }
+    }
+
     // 비밀번호 제외
     const { password, ...userWithoutPassword } = user;
     req.user = userWithoutPassword;

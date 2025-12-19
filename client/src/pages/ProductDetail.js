@@ -36,6 +36,17 @@ const ProductDetail = () => {
     insurance: 'none'
   });
 
+  // 신고 모달 상태
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportData, setReportData] = useState({
+    type: 'fake_product',
+    reason: '',
+    description: ''
+  });
+  const [reportTarget, setReportTarget] = useState(null);
+
+  // 안전 장소 추천 기능은 현재 비활성화 (UI/요청 제거)
+
   useEffect(() => {
     loadProduct();
     loadReservedDates();
@@ -95,21 +106,6 @@ const ProductDetail = () => {
         ))}
       </div>
     );
-  };
-
-  // 날짜가 예약된 범위에 포함되는지 확인
-  const isDateReserved = (date) => {
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    
-    return reservedDates.some(reserved => {
-      const start = new Date(reserved.startDate);
-      const end = new Date(reserved.endDate);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(0, 0, 0, 0);
-      
-      return checkDate >= start && checkDate <= end;
-    });
   };
 
   // 이미지 관련 함수
@@ -287,6 +283,42 @@ const ProductDetail = () => {
     navigate(`/chats/${roomId}`);
   };
 
+  // 신고 처리
+  const handleReport = (targetType, targetId) => {
+    if (!user) {
+      alert('로그인이 필요합니다');
+      navigate('/login');
+      return;
+    }
+    setReportTarget({ targetType, targetId });
+    setReportData({ type: targetType === 'product' ? 'fake_product' : 'no_show', reason: '', description: '' });
+    setShowReportModal(true);
+  };
+
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    if (!reportData.reason) {
+      alert('신고 사유를 선택해주세요');
+      return;
+    }
+
+    try {
+      await api.post('/reports', {
+        type: reportData.type,
+        targetType: reportTarget.targetType,
+        targetId: reportTarget.targetId,
+        reason: reportData.reason,
+        description: reportData.description
+      });
+      alert('신고가 접수되었습니다. 검토 후 처리됩니다.');
+      setShowReportModal(false);
+      setReportTarget(null);
+      setReportData({ type: 'fake_product', reason: '', description: '' });
+    } catch (error) {
+      alert(error.response?.data?.message || '신고 접수 실패');
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading">
@@ -407,6 +439,13 @@ const ProductDetail = () => {
                 </button>
                 <button onClick={handleChat} className="btn btn-outline">
                   채팅하기
+                </button>
+                <button 
+                  onClick={() => handleReport('product', id)}
+                  className="btn btn-outline"
+                  style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                >
+                  🚨 신고
                 </button>
               </>
             )}
@@ -574,7 +613,7 @@ const ProductDetail = () => {
                   value={rentalData.meetingLocation}
                   onChange={(e) => setRentalData({...rentalData, meetingLocation: e.target.value})}
                   required
-                  placeholder="만남 장소를 입력하세요"
+                  placeholder="만남 장소를 입력하세요 (예: 역 출구, 카페 등 사람 많은 장소를 권장)"
                 />
               </div>
 
@@ -704,6 +743,80 @@ const ProductDetail = () => {
           </div>
         </div>
       )}
+
+      {/* 신고 모달 */}
+      {showReportModal && reportTarget && (
+        <div className="modal-overlay" onClick={() => setShowReportModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>🚨 신고하기</h2>
+            <form onSubmit={handleSubmitReport}>
+              <div className="form-group">
+                <label>신고 유형</label>
+                <select
+                  value={reportData.type}
+                  onChange={(e) => setReportData({...reportData, type: e.target.value})}
+                  required
+                >
+                  <option value="fake_product">허위매물</option>
+                  <option value="no_show">노쇼</option>
+                  <option value="other">기타</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>신고 사유</label>
+                <select
+                  value={reportData.reason}
+                  onChange={(e) => setReportData({...reportData, reason: e.target.value})}
+                  required
+                >
+                  <option value="">선택해주세요</option>
+                  {reportData.type === 'fake_product' && (
+                    <>
+                      <option value="different_product">제품이 설명과 다름</option>
+                      <option value="damaged_product">제품이 손상됨</option>
+                      <option value="fake_product">가짜 제품</option>
+                    </>
+                  )}
+                  {reportData.type === 'no_show' && (
+                    <>
+                      <option value="no_meeting">약속 장소에 나타나지 않음</option>
+                      <option value="late_arrival">심각한 지각</option>
+                    </>
+                  )}
+                  {reportData.type === 'other' && (
+                    <>
+                      <option value="inappropriate_behavior">부적절한 행동</option>
+                      <option value="fraud">사기 의심</option>
+                      <option value="other">기타</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>상세 설명 (선택사항)</label>
+                <textarea
+                  value={reportData.description}
+                  onChange={(e) => setReportData({...reportData, description: e.target.value})}
+                  placeholder="신고 내용을 자세히 설명해주세요"
+                  rows={4}
+                  maxLength={500}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="submit" className="btn btn-danger">신고하기</button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowReportModal(false)}
+                  className="btn btn-outline"
+                >
+                  취소
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

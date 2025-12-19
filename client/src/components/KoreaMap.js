@@ -76,17 +76,13 @@ const KoreaMap = ({ selectedRegion, onRegionSelect }) => {
     const container = containerRef.current;
     if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
     // zIndex가 높은 순서대로 (위에서 아래로) 체크
     const sortedRegions = Object.entries(REGION_DATA)
       .sort((a, b) => b[1].zIndex - a[1].zIndex); // 높은 zIndex 먼저
 
     let clickedRegion = null;
 
-    for (const [region, data] of sortedRegions) {
+    for (const [region] of sortedRegions) {
       const img = imageRefs.current[region];
       if (!img || !img.complete || img.naturalWidth === 0) continue;
 

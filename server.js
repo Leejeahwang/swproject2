@@ -26,6 +26,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
+// 증거 데이터 수집 미들웨어
+const { collectEvidence, saveChatEvidence, cleanupExpiredEvidence } = require('./middleware/evidence');
+app.use(collectEvidence);
+
 // uploads 폴더 자동 생성
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -45,6 +49,8 @@ app.use('/api/rentals', require('./routes/rentals'));
 app.use('/api/chats', require('./routes/chats'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/locations', require('./routes/locations'));
 
 // Socket.io 채팅 기능
 const chatNamespace = io.of('/chat');
@@ -108,6 +114,9 @@ chatNamespace.on('connection', (socket) => {
         lastMessageAt: new Date().toISOString()
       })
       .write();
+    
+    // 증거 데이터에 채팅 메시지 저장
+    saveChatEvidence(roomId, message, senderId);
     
     // 채팅 알림 생성 - 상대방에게
     const { createNotification } = require('./routes/notifications');
@@ -240,6 +249,11 @@ const checkOverdueRentals = () => {
 setInterval(checkOverdueRentals, 60 * 60 * 1000); // 1시간
 // 서버 시작 시 한 번 실행
 setTimeout(checkOverdueRentals, 5000);
+
+// 증거 데이터 정리 스케줄러 (매일 자정에 실행)
+setInterval(cleanupExpiredEvidence, 24 * 60 * 60 * 1000); // 24시간
+// 서버 시작 시 한 번 실행
+setTimeout(cleanupExpiredEvidence, 10000);
 
 // 서버 시작
 const PORT = process.env.PORT || 5000;

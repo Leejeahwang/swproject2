@@ -24,6 +24,12 @@ const MyRentals = () => {
   // 빌려주는 사람의 안심결제 옵션 상태 (각 대여 ID별로 관리)
   const [ownerSafePayOptions, setOwnerSafePayOptions] = useState({});
 
+  // 이미지 업로드 상태
+  const [showImageUploadModal, setShowImageUploadModal] = useState(false);
+  const [imageUploadType, setImageUploadType] = useState(null); // 'before' or 'after'
+  const [selectedRentalForImage, setSelectedRentalForImage] = useState(null);
+  const [uploadImages, setUploadImages] = useState([]);
+
   useEffect(() => {
     loadRentals();
   }, []);
@@ -228,6 +234,81 @@ const MyRentals = () => {
       loadRentals();
     } catch (error) {
       alert(error.response?.data?.message || '리뷰 작성 실패');
+    }
+  };
+
+  const handleOpenImageUpload = (rental, type) => {
+    setSelectedRentalForImage(rental);
+    setImageUploadType(type);
+    setUploadImages([]);
+    setShowImageUploadModal(true);
+  };
+
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 5) {
+      alert('최대 5개까지 업로드 가능합니다');
+      return;
+    }
+    setUploadImages(files);
+  };
+
+  const handleImageUpload = async (e) => {
+    e.preventDefault();
+    if (uploadImages.length === 0) {
+      alert('이미지를 선택해주세요');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      uploadImages.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const endpoint = imageUploadType === 'before' 
+        ? `/rentals/${selectedRentalForImage._id}/before-images`
+        : `/rentals/${selectedRentalForImage._id}/after-images`;
+
+      await api.put(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      alert(imageUploadType === 'before' ? '대여 전 이미지가 업로드되었습니다' : '반납 후 이미지가 업로드되었습니다');
+      setShowImageUploadModal(false);
+      setSelectedRentalForImage(null);
+      setImageUploadType(null);
+      setUploadImages([]);
+      loadRentals();
+    } catch (error) {
+      alert(error.response?.data?.message || '이미지 업로드 실패');
+    }
+  };
+
+  const handleReport = async (targetType, targetId, type = 'no_show') => {
+    if (!user) {
+      alert('로그인이 필요합니다');
+      return;
+    }
+
+    const reason = prompt('신고 사유를 입력해주세요:');
+    if (!reason) return;
+
+    const description = prompt('상세 설명을 입력해주세요 (선택사항):') || '';
+
+    try {
+      await api.post('/reports', {
+        type,
+        targetType,
+        targetId,
+        reason,
+        description
+      });
+      alert('신고가 접수되었습니다. 검토 후 처리됩니다.');
+    } catch (error) {
+      alert(error.response?.data?.message || '신고 접수 실패');
     }
   };
 
@@ -535,14 +616,42 @@ const MyRentals = () => {
               </>
             )}
             
-            {/* 빌려주는 사람: returning 상태에서 반납 확인 */}
+            {/* 빌려주는 사람: returning 상태에서 반납 후 이미지 확인 및 반납 확인 */}
             {!isBorrower && rental.status === 'returning' && (
-              <button 
-                onClick={() => handleComplete(rental._id)}
-                className="btn btn-primary"
-              >
-                ✅ 반납 확인
-              </button>
+              <>
+                {rental.afterImages && rental.beforeImages && (
+                  <button 
+                    onClick={() => {
+                      // 이미지 비교 뷰어 열기
+                      setSelectedRentalForImage(rental);
+                      setImageUploadType('compare');
+                      setShowImageUploadModal(true);
+                    }}
+                    className="btn btn-outline"
+                    style={{ marginBottom: '10px' }}
+                  >
+                    📊 이미지 비교 보기
+                  </button>
+                )}
+                {!rental.afterImages && (
+                  <div style={{ 
+                    padding: '8px', 
+                    backgroundColor: '#fff3cd', 
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    fontSize: '13px',
+                    color: '#856404'
+                  }}>
+                    ⚠️ 반납 후 이미지가 아직 업로드되지 않았습니다
+                  </div>
+                )}
+                <button 
+                  onClick={() => handleComplete(rental._id)}
+                  className="btn btn-primary"
+                >
+                  ✅ 반납 확인
+                </button>
+              </>
             )}
 
             {/* 빌리는 사람: approved 상태에서 결제 대기 */}
@@ -556,38 +665,93 @@ const MyRentals = () => {
               </button>
             )}
 
-            {/* 빌리는 사람: ongoing에서 반납 요청 */}
+            {/* 빌리는 사람: ongoing에서 대여 전 이미지 업로드 및 반납 요청 */}
             {isBorrower && rental.status === 'ongoing' && (
-              <button 
-                onClick={() => handleReturn(rental._id)}
-                className="btn btn-success"
-              >
-                반납하기
-              </button>
+              <>
+                {!rental.beforeImages && (
+                  <button 
+                    onClick={() => handleOpenImageUpload(rental, 'before')}
+                    className="btn btn-outline"
+                    style={{ marginBottom: '10px' }}
+                  >
+                    📸 대여 전 이미지 업로드
+                  </button>
+                )}
+                {rental.beforeImages && (
+                  <div style={{ 
+                    padding: '8px', 
+                    backgroundColor: '#d1fae5', 
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    fontSize: '13px',
+                    color: '#065f46'
+                  }}>
+                    ✅ 대여 전 이미지 업로드 완료 ({rental.beforeImages.length}장)
+                  </div>
+                )}
+                <button 
+                  onClick={() => handleReturn(rental._id)}
+                  className="btn btn-success"
+                >
+                  반납하기
+                </button>
+              </>
             )}
 
-            {/* 빌리는 사람: returning 상태에서는 대기 메시지 */}
+            {/* 빌리는 사람: returning 상태에서 반납 후 이미지 업로드 및 대기 메시지 */}
             {isBorrower && rental.status === 'returning' && (
-              <div style={{ 
-                padding: '10px', 
-                backgroundColor: '#fff3cd', 
-                borderRadius: '8px',
-                color: '#856404',
-                fontSize: '14px',
-                textAlign: 'center'
-              }}>
-                ⏳ 빌려준 사람의 반납 확인을 기다리는 중입니다
-              </div>
+              <>
+                {!rental.afterImages && (
+                  <button 
+                    onClick={() => handleOpenImageUpload(rental, 'after')}
+                    className="btn btn-outline"
+                    style={{ marginBottom: '10px' }}
+                  >
+                    📸 반납 후 이미지 업로드
+                  </button>
+                )}
+                {rental.afterImages && (
+                  <div style={{ 
+                    padding: '8px', 
+                    backgroundColor: '#d1fae5', 
+                    borderRadius: '8px',
+                    marginBottom: '10px',
+                    fontSize: '13px',
+                    color: '#065f46'
+                  }}>
+                    ✅ 반납 후 이미지 업로드 완료 ({rental.afterImages.length}장)
+                  </div>
+                )}
+                <div style={{ 
+                  padding: '10px', 
+                  backgroundColor: '#fff3cd', 
+                  borderRadius: '8px',
+                  color: '#856404',
+                  fontSize: '14px',
+                  textAlign: 'center'
+                }}>
+                  ⏳ 빌려준 사람의 반납 확인을 기다리는 중입니다
+                </div>
+              </>
             )}
 
             {/* 빌리는 사람: pending에서만 취소 가능 */}
             {isBorrower && rental.status === 'pending' && (
-              <button 
-                onClick={() => handleCancel(rental._id)}
-                className="btn btn-danger"
-              >
-                취소
-              </button>
+              <>
+                <button 
+                  onClick={() => handleCancel(rental._id)}
+                  className="btn btn-danger"
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={() => handleReport('rental', rental._id, 'no_show')}
+                  className="btn btn-outline"
+                  style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                >
+                  🚨 노쇼 신고
+                </button>
+              </>
             )}
 
             {/* 빌려주는 사람: pending에서만 취소 가능 */}
@@ -777,6 +941,122 @@ const MyRentals = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 이미지 업로드 모달 */}
+      {showImageUploadModal && selectedRentalForImage && (
+        <div className="modal-overlay" onClick={() => setShowImageUploadModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            {imageUploadType === 'compare' ? (
+              <>
+                <h2>📊 대여 전/후 이미지 비교</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+                  <div>
+                    <h3 style={{ marginBottom: '10px', fontSize: '16px' }}>대여 전</h3>
+                    {selectedRentalForImage.beforeImages && selectedRentalForImage.beforeImages.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {selectedRentalForImage.beforeImages.map((img, idx) => (
+                          <img 
+                            key={idx}
+                            src={`http://localhost:5000${img}`}
+                            alt={`대여 전 ${idx + 1}`}
+                            style={{ width: '100%', borderRadius: '8px', border: '2px solid #10b981' }}
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ color: '#999' }}>대여 전 이미지가 없습니다</p>
+                    )}
+                  </div>
+                  <div>
+                    <h3 style={{ marginBottom: '10px', fontSize: '16px' }}>반납 후</h3>
+                    {selectedRentalForImage.afterImages && selectedRentalForImage.afterImages.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {selectedRentalForImage.afterImages.map((img, idx) => (
+                          <img 
+                            key={idx}
+                            src={`http://localhost:5000${img}`}
+                            alt={`반납 후 ${idx + 1}`}
+                            style={{ width: '100%', borderRadius: '8px', border: '2px solid #ef4444' }}
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ color: '#999' }}>반납 후 이미지가 없습니다</p>
+                    )}
+                  </div>
+                </div>
+                <div className="modal-actions" style={{ marginTop: '20px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowImageUploadModal(false)}
+                    className="btn btn-outline"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2>{imageUploadType === 'before' ? '📸 대여 전 이미지 업로드' : '📸 반납 후 이미지 업로드'}</h2>
+                <p style={{ marginBottom: '20px', color: '#666', fontSize: '14px' }}>
+                  {imageUploadType === 'before' 
+                    ? '대여 시작 전 제품 상태를 촬영하여 업로드해주세요. (최대 5장)'
+                    : '반납 시 제품 상태를 촬영하여 업로드해주세요. (최대 5장)'}
+                </p>
+                <form onSubmit={handleImageUpload}>
+                  <div className="form-group">
+                    <label>이미지 선택</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageSelect}
+                      required
+                      style={{ marginTop: '8px' }}
+                    />
+                    {uploadImages.length > 0 && (
+                      <div style={{ marginTop: '10px' }}>
+                        <p style={{ fontSize: '13px', color: '#666' }}>
+                          선택된 이미지: {uploadImages.length}개
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                          {uploadImages.map((file, idx) => (
+                            <div key={idx} style={{ position: 'relative' }}>
+                              <img 
+                                src={URL.createObjectURL(file)}
+                                alt={`미리보기 ${idx + 1}`}
+                                style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="modal-actions">
+                    <button type="submit" className="btn btn-primary">
+                      업로드
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowImageUploadModal(false)}
+                      className="btn btn-outline"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

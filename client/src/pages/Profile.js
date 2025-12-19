@@ -47,6 +47,7 @@ const Profile = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const inputRefs = useRef([]);
 
+
   // 계정 탈퇴 관련 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
@@ -74,6 +75,7 @@ const Profile = () => {
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
+
 
   useEffect(() => {
     loadUserData();

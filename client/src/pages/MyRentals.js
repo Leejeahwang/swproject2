@@ -619,20 +619,6 @@ const MyRentals = () => {
             {/* 빌려주는 사람: returning 상태에서 반납 후 이미지 확인 및 반납 확인 */}
             {!isBorrower && rental.status === 'returning' && (
               <>
-                {rental.afterImages && rental.beforeImages && (
-                  <button 
-                    onClick={() => {
-                      // 이미지 비교 뷰어 열기
-                      setSelectedRentalForImage(rental);
-                      setImageUploadType('compare');
-                      setShowImageUploadModal(true);
-                    }}
-                    className="btn btn-outline"
-                    style={{ marginBottom: '10px' }}
-                  >
-                    📊 이미지 비교 보기
-                  </button>
-                )}
                 {!rental.afterImages && (
                   <div style={{ 
                     padding: '8px', 
@@ -645,12 +631,33 @@ const MyRentals = () => {
                     ⚠️ 반납 후 이미지가 아직 업로드되지 않았습니다
                   </div>
                 )}
-                <button 
-                  onClick={() => handleComplete(rental._id)}
-                  className="btn btn-primary"
-                >
-                  ✅ 반납 확인
-                </button>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '10px',
+                  alignItems: 'stretch'
+                }}>
+                  {rental.afterImages && rental.beforeImages && (
+                    <button 
+                      onClick={() => {
+                        // 이미지 비교 뷰어 열기
+                        setSelectedRentalForImage(rental);
+                        setImageUploadType('compare');
+                        setShowImageUploadModal(true);
+                      }}
+                      className="btn btn-outline"
+                      style={{ flex: 1 }}
+                    >
+                      📊 이미지 비교 보기
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => handleComplete(rental._id)}
+                    className="btn btn-primary"
+                    style={{ flex: 1 }}
+                  >
+                    ✅ 반납 확인
+                  </button>
+                </div>
               </>
             )}
 
@@ -668,15 +675,6 @@ const MyRentals = () => {
             {/* 빌리는 사람: ongoing에서 대여 전 이미지 업로드 및 반납 요청 */}
             {isBorrower && rental.status === 'ongoing' && (
               <>
-                {!rental.beforeImages && (
-                  <button 
-                    onClick={() => handleOpenImageUpload(rental, 'before')}
-                    className="btn btn-outline"
-                    style={{ marginBottom: '10px' }}
-                  >
-                    📸 대여 전 이미지 업로드
-                  </button>
-                )}
                 {rental.beforeImages && (
                   <div style={{ 
                     padding: '8px', 
@@ -689,12 +687,28 @@ const MyRentals = () => {
                     ✅ 대여 전 이미지 업로드 완료 ({rental.beforeImages.length}장)
                   </div>
                 )}
-                <button 
-                  onClick={() => handleReturn(rental._id)}
-                  className="btn btn-success"
-                >
-                  반납하기
-                </button>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '10px',
+                  alignItems: 'stretch'
+                }}>
+                  {!rental.beforeImages && (
+                    <button 
+                      onClick={() => handleOpenImageUpload(rental, 'before')}
+                      className="btn btn-outline"
+                      style={{ flex: 1 }}
+                    >
+                      📸 대여 전 이미지 업로드
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => handleReturn(rental._id)}
+                    className="btn btn-success"
+                    style={{ flex: 1 }}
+                  >
+                    반납하기
+                  </button>
+                </div>
               </>
             )}
 
@@ -903,9 +917,8 @@ const MyRentals = () => {
                   {[1, 2, 3, 4, 5].map(star => (
                     <span
                       key={star}
-                      className={`rating-star ${reviewData.rating >= star ? 'active' : ''}`}
+                      className={`star ${reviewData.rating >= star ? 'active' : ''}`}
                       onClick={() => setReviewData({ ...reviewData, rating: star })}
-                      aria-label={`${star}점`}
                     >
                       ⭐
                     </span>

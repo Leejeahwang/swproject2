@@ -9,11 +9,10 @@
 }
 
 .chats-list {
-  background: var(--bg-color);
+  background: white;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   overflow: hidden;
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .chat-item {
@@ -21,16 +20,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 1px solid #eee;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  background: var(--bg-color);
+  transition: background 0.2s;
 }
 
 .chat-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--box-shadow-hover);
+  background: #f8f9fa;
 }
 
 .chat-item:last-child {
@@ -100,4 +97,3 @@
     max-width: 100%;
   }
 }
-

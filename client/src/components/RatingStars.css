@@ -3,7 +3,7 @@
   align-items: center;
   gap: 4px;
   font-weight: 600;
-  color: #7fa5c9;
+  color: var(--dark-color);
 }
 
 .rating-stars-sm .rating-star {
@@ -21,22 +21,19 @@
   height: 22px;
 }
 
-.rating-star path {
-  stroke-width: 1.2;
+.rating-star {
+  font-size: 20px;
+  filter: grayscale(100%);
+  opacity: 0.3;
 }
 
-.rating-star.filled path {
-  fill: #9ab7d3;
-  stroke: #7fa5c9;
-}
-
-.rating-star.empty path {
-  fill: rgba(255, 255, 255, 0.2);
-  stroke: rgba(127, 165, 201, 0.6);
+.rating-star.filled {
+  filter: grayscale(0%);
+  opacity: 1;
+  color: #ffc107;
 }
 
 .rating-score {
   font-size: 0.85rem;
-  color: #7289a7;
+  color: #666;
 }
-

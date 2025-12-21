@@ -66,7 +66,7 @@ const ProductCard = ({ product }) => {
             <div className="product-owner">
               <span className="owner-name">{product.owner.username}</span>
               <span className="owner-rating">
-                <span className="soft-star-mini"></span> {(product.owner.averageRating || 0).toFixed(1)}
+                ⭐ {(product.owner.averageRating || 0).toFixed(1)}
               </span>
             </div>
           )}

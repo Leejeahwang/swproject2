@@ -10,21 +10,21 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
-  background: var(--bg-color);
-  border: 1px solid rgba(192, 209, 225, 0.15);
-  border-radius: 20px;
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: var(--border-radius);
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: var(--box-shadow-inset);
   user-select: none;
 }
 
 .custom-select-trigger:hover {
-  color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .custom-select.open .custom-select-trigger {
-  box-shadow: var(--box-shadow-pressed);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
 }
 
 .arrow {
@@ -42,10 +42,10 @@
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: var(--bg-color);
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(192, 209, 225, 0.15);
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #ddd;
   padding: 8px;
   margin: 0;
   list-style: none;
@@ -80,7 +80,7 @@
   padding: 10px 16px;
   cursor: pointer;
   transition: all 0.2s;
-  border-radius: 8px;
+  border-radius: 6px;
   text-align: left;
   white-space: nowrap;
   font-size: 14px;
@@ -89,15 +89,14 @@
 }
 
 .custom-select-option:hover {
-  background: rgba(79, 195, 247, 0.1);
+  background: #f8f9fa;
   color: var(--primary-color);
 }
 
 .custom-select-option.selected {
-  background: var(--bg-color);
-  color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
   font-weight: 600;
-  box-shadow: var(--box-shadow-inset);
 }
 
 /* 세부지역 드롭다운 래퍼 */
@@ -109,4 +108,3 @@
 .custom-select-wrapper {
   width: max-content;
 }
-

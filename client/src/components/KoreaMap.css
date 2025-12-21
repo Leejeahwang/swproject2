@@ -6,11 +6,9 @@
   margin: 0 auto;
   padding: 20px;
   padding-bottom: 40px; /* 제주도 공간 확보 */
-  background: linear-gradient(145deg, #e6f3ff 0%, #f0f7ff 50%, #e8f4fc 100%);
-  border-radius: 20px;
-  box-shadow: 
-    0 10px 40px rgba(102, 126, 234, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   overflow: visible; /* 제주도가 잘리지 않도록 */
 }
 
@@ -47,17 +45,17 @@
 
 .region-image.selected {
   transform: scale(1.05);
-  filter: brightness(1.15) drop-shadow(0 0 15px rgba(102, 126, 234, 0.6));
+  filter: brightness(1.15) drop-shadow(0 0 15px rgba(79, 195, 247, 0.6));
   animation: region-pulse 2s ease-in-out infinite;
   z-index: 200 !important;
 }
 
 @keyframes region-pulse {
   0%, 100% {
-    filter: brightness(1.15) drop-shadow(0 0 15px rgba(102, 126, 234, 0.6));
+    filter: brightness(1.15) drop-shadow(0 0 15px rgba(79, 195, 247, 0.6));
   }
   50% {
-    filter: brightness(1.2) drop-shadow(0 0 20px rgba(102, 126, 234, 0.8));
+    filter: brightness(1.2) drop-shadow(0 0 20px rgba(79, 195, 247, 0.8));
   }
 }
 
@@ -71,12 +69,12 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-color);
   color: white;
   border-radius: 20px;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
   animation: badge-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   z-index: 1000;
 }

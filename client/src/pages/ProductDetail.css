@@ -22,12 +22,12 @@
   border-radius: var(--border-radius);
   margin-bottom: 15px;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--box-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .main-image:hover {
-  box-shadow: var(--box-shadow-hover);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .thumbnail-list {
@@ -55,23 +55,14 @@
 .thumbnail.active {
   opacity: 1;
   border: 2px solid var(--primary-color);
-  box-shadow: var(--box-shadow), 0 0 0 2px var(--primary-color);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
 }
 
 .detail-info {
-  background: var(--bg-color);
+  background: white;
   padding: 30px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-  isolation: isolate;
-}
-
-.detail-info:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--box-shadow-hover);
 }
 
 .detail-header {
@@ -88,22 +79,17 @@
 
 .like-btn {
   padding: 8px 16px;
-  border: 1px solid rgba(192, 209, 225, 0.15);
-  background: var(--bg-color);
+  border: 2px solid var(--primary-color);
+  background: white;
   border-radius: var(--border-radius);
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s;
-  box-shadow: var(--box-shadow);
-  color: var(--primary-color);
 }
 
 .like-btn:hover {
-  box-shadow: var(--box-shadow-hover);
-}
-
-.like-btn:active {
-  box-shadow: var(--box-shadow-pressed);
+  background: var(--primary-color);
+  color: white;
 }
 
 .price-info {
@@ -112,7 +98,7 @@
   gap: 8px;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 2px solid #eee;
 }
 
 .price {
@@ -132,7 +118,7 @@
   gap: 15px;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 2px solid #eee;
 }
 
 .meta-item {
@@ -152,7 +138,7 @@
 .owner-info {
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 2px solid #eee;
 }
 
 .owner-info h3 {
@@ -163,17 +149,15 @@
 .owner-card {
   display: block;
   padding: 15px;
-  background: var(--bg-color);
+  background: #f8f9fa;
   border-radius: var(--border-radius);
   text-decoration: none;
   color: inherit;
-  transition: all 0.2s;
-  box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
+  transition: background 0.2s;
 }
 
 .owner-card:hover {
-  box-shadow: var(--box-shadow-hover);
+  background: #e9ecef;
 }
 
 .owner-details h4 {
@@ -199,12 +183,11 @@
 }
 
 .description-section {
-  background: var(--bg-color);
+  background: white;
   padding: 30px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   margin-bottom: 40px;
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .description-section h2 {
@@ -227,60 +210,28 @@
   color: var(--dark-color);
 }
 
-/* 모달 ?��???*/
+/* 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
-.product-detail .modal-content {
-  background: var(--bg-color);
+.modal-content {
+  background: white;
   padding: 30px;
   border-radius: var(--border-radius);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: none !important;
-  border: 1px solid rgba(192, 209, 225, 0.3);
-}
-
-/* 모달 스크롤바 커스터마이징 - Neumorphism */
-.modal-content::-webkit-scrollbar {
-  width: 10px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-  background: var(--bg-color);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  box-shadow: var(--box-shadow-inset);
-  margin: 15px 0;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background: #a3b1c6;
-  border-radius: 10px;
-  border: 1px solid rgba(163, 177, 198, 0.3);
-  transition: background 0.6s ease, border 0.6s ease;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-color);
-  border: 1px solid var(--primary-color);
-}
-
-.modal-content::-webkit-scrollbar-thumb:active {
-  background: #29b6f6;
-  border: 1px solid #29b6f6;
 }
 
 .modal-content h2 {
@@ -298,7 +249,7 @@
   flex: 1;
 }
 
-/* ???��???*/
+/* 폼 스타일 */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -322,92 +273,26 @@
 .form-group textarea,
 .form-group select {
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: var(--bg-color);
-  border-radius: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-size: 0.95rem;
-  transition: all 0.2s;
-  box-shadow: var(--box-shadow-inset);
-  color: var(--dark-color);
+  transition: border-color 0.2s;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  box-shadow: var(--box-shadow-pressed);
+  border-color: var(--primary-color);
 }
 
-/* 날짜/시간 입력 필드 강제 스타일 적용 */
-.modal-content .form-group input[type="date"],
-.modal-content .form-group input[type="time"],
-.form-group input[type="date"],
-.form-group input[type="time"] {
-  padding: 10px 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  background: var(--bg-color) !important;
-  border-radius: 12px !important;
-  font-size: 0.95rem !important;
-  box-shadow: var(--box-shadow-inset) !important;
-  color: var(--dark-color) !important;
-  font-family: inherit !important;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: var(--bg-color) !important;
-  background-image: none !important;
-}
-
-.modal-content .form-group input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-.modal-content .form-group input[type="time"]::-webkit-datetime-edit-fields-wrapper,
-.form-group input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-.form-group input[type="time"]::-webkit-datetime-edit-fields-wrapper {
-  padding: 0;
-}
-
-.modal-content .form-group input[type="date"]::-webkit-calendar-picker-indicator,
-.modal-content .form-group input[type="time"]::-webkit-calendar-picker-indicator,
-.form-group input[type="date"]::-webkit-calendar-picker-indicator,
-.form-group input[type="time"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  filter: invert(0.5);
-  padding: 4px;
-}
-
-.modal-content .form-group input[type="date"]:focus,
-.modal-content .form-group input[type="time"]:focus,
-.form-group input[type="date"]:focus,
-.form-group input[type="time"]:focus {
-  outline: none !important;
-  box-shadow: var(--box-shadow-pressed) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-}
-
-.form-group select {
-  padding: 10px 12px !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  background: var(--bg-color) !important;
-  border-radius: 12px !important;
-  font-size: 0.95rem !important;
-  box-shadow: var(--box-shadow-inset) !important;
-  color: var(--dark-color) !important;
-  cursor: pointer;
-}
-
-.form-group select:focus {
-  outline: none !important;
-  box-shadow: var(--box-shadow-pressed) !important;
-}
-
-
-/* 리뷰 ?�션 */
+/* 리뷰 섹션 */
 .reviews-section {
-  background: var(--bg-color);
+  background: white;
   padding: 30px;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .reviews-header {
@@ -416,20 +301,12 @@
   align-items: center;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 2px solid #f0f0f0;
 }
 
 .reviews-header h2 {
   margin: 0;
   color: var(--dark-color);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.reviews-header h2 .soft-star-mini {
-  font-size: 1.5em;
-  line-height: 1;
 }
 
 .review-summary {
@@ -456,19 +333,12 @@
 
 .star {
   font-size: 20px;
-  display: inline-flex;
-  align-items: center;
+  filter: grayscale(100%);
+  opacity: 0.3;
 }
 
-.star .soft-star-mini {
-  background: #d1d9e6;
-  filter: drop-shadow(1px 1px 1px rgba(255, 255, 255, 0.8));
-  opacity: 0.4;
-}
-
-.star.filled .soft-star-mini {
-  background: var(--primary-color);
-  filter: drop-shadow(2px 2px 3px rgba(163, 177, 198, 0.4)) drop-shadow(-2px -2px 3px rgba(255, 255, 255, 0.8));
+.star.filled {
+  filter: grayscale(0%);
   opacity: 1;
 }
 
@@ -495,17 +365,16 @@
 }
 
 .review-card {
-  background: var(--bg-color);
+  background: #f8f9fa;
   padding: 20px;
-  border-radius: var(--border-radius);
-  border: none;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
   transition: all 0.3s;
-  box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .review-card:hover {
-  box-shadow: var(--box-shadow-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary-color);
 }
 
 .review-header {
@@ -536,10 +405,9 @@
 .reviewer-rating {
   font-size: 14px;
   color: #666;
-  background: var(--bg-color);
+  background: white;
   padding: 4px 10px;
   border-radius: 20px;
-  box-shadow: var(--box-shadow);
 }
 
 .review-rating-date {
@@ -570,7 +438,7 @@
   font-size: 13px;
   color: #666;
   padding-top: 12px;
-  border-top: 1px solid rgba(192, 209, 225, 0.15);
+  border-top: 1px solid #e9ecef;
 }
 
 .reviewee-link {
@@ -631,14 +499,13 @@
   }
 }
 
-/* ?�약 ?�력 ?�션 */
+/* 예약 달력 섹션 */
 .calendar-section {
-  background: var(--bg-color);
+  background: #f8f9fa;
   padding: 30px;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   margin-bottom: 30px;
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .calendar-section h2 {
@@ -661,10 +528,8 @@
 .reserved-dates-detail {
   margin-top: 30px;
   padding: 20px;
-  background: var(--bg-color);
+  background: white;
   border-radius: 8px;
-  box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .reserved-dates-detail h3 {
@@ -722,7 +587,7 @@
   font-size: 1.05rem;
 }
 
-/* 모달 ???�약 불�? ?�짜 ?�내 */
+/* 모달 내 예약 불가 날짜 안내 */
 .modal-warning {
   background: #fff3e0;
   border: 1px solid #ffb74d;
@@ -743,16 +608,15 @@
 }
 
 .reserved-dates-warning li {
-  padding: 8px 12px;
-  background: #fff3e0;
-  border-radius: 6px;
+  padding: 6px 10px;
+  background: white;
+  border-radius: 4px;
   margin-bottom: 6px;
   font-size: 0.9rem;
   color: #d84315;
-  box-shadow: -4px -4px 8px rgba(255, 255, 255, 0.6), 4px 4px 8px rgba(255, 152, 0, 0.25);
 }
 
-/* 결제 ?�션 ?��???*/
+/* 결제 옵션 스타일 */
 .payment-options {
   border-top: 1px solid #e0e0e0;
   padding-top: 20px;
@@ -775,15 +639,13 @@
   gap: 12px;
   cursor: pointer;
   padding: 15px;
-  background: var(--bg-color);
+  background: #f8f9fa;
   border-radius: 8px;
-  transition: all 0.2s;
-  box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
+  transition: background 0.2s;
 }
 
 .checkbox-label:hover {
-  box-shadow: var(--box-shadow-hover);
+  background: #e9ecef;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -810,12 +672,11 @@
 }
 
 .price-summary {
-  background: var(--bg-color);
-  border: 1px solid rgba(192, 209, 225, 0.15);
+  background: #f0f7ff;
+  border: 1px solid #d0e4ff;
   border-radius: 8px;
   padding: 20px;
   margin-top: 20px;
-  box-shadow: var(--box-shadow);
 }
 
 .price-summary h4 {
@@ -842,7 +703,7 @@
   color: #1976d2;
 }
 
-/* ?��?지 ?��? 모달 */
+/* 이미지 확대 모달 */
 .image-modal-overlay {
   position: fixed;
   top: 0;
@@ -1019,7 +880,7 @@
   box-shadow: 0 0 12px rgba(255, 87, 34, 0.6);
 }
 
-/* 모바??반응??*/
+/* 모바일 반응형 */
 @media (max-width: 768px) {
   .image-modal-prev {
     left: 10px;
@@ -1053,5 +914,3 @@
     height: 45px;
   }
 }
-
-

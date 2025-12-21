@@ -12,7 +12,7 @@
   display: flex;
   gap: 10px;
   margin-bottom: 30px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 2px solid #eee;
 }
 
 .rentals-list {
@@ -22,19 +22,10 @@
 }
 
 .rental-card {
-  background: var(--bg-color);
+  background: white;
   border-radius: var(--border-radius);
   padding: 20px;
   box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-  isolation: isolate;
-}
-
-.rental-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--box-shadow-hover);
 }
 
 .rental-header {
@@ -43,7 +34,7 @@
   align-items: start;
   margin-bottom: 15px;
   padding-bottom: 15px;
-  border-bottom: 1px solid rgba(192, 209, 225, 0.15);
+  border-bottom: 1px solid #eee;
 }
 
 .rental-image {
@@ -121,44 +112,6 @@
   background-color: var(--danger-color);
 }
 
-.status-overdue {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  animation: pulse-overdue-badge 2s infinite;
-}
-
-@keyframes pulse-overdue-badge {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
-  }
-}
-
-/* 지연 요금 표시 */
-.overdue-fee-info {
-  background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
-  border: 1px solid rgba(220, 53, 69, 0.3);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.overdue-fee-info .fee-label {
-  color: #dc3545;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.overdue-fee-info .fee-amount {
-  color: #c82333;
-  font-weight: 700;
-  font-size: 16px;
-}
-
 .rental-details {
   display: flex;
   flex-direction: column;
@@ -178,14 +131,6 @@
 
 .detail-item .value {
   color: var(--dark-color);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.detail-item .soft-star-badge {
-  margin-left: 8px;
-  font-size: 0.85rem;
 }
 
 .rental-actions {
@@ -199,12 +144,10 @@
 
 /* 리뷰 모달 */
 .review-target {
-  background: var(--bg-color);
+  background: #f8f9fa;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: var(--box-shadow-inset);
-  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .review-target p {
@@ -218,49 +161,25 @@
   color: #666 !important;
 }
 
-.my-rentals-page .star-rating {
+.star-rating {
   display: flex;
-  gap: 12px;
+  gap: 5px;
   margin: 10px 0;
 }
 
-.my-rentals-page .rating-star {
-  width: 40px;
-  height: 40px;
+.star-rating .star {
+  font-size: 32px;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  display: inline-block;
-  position: relative;
+  transition: transform 0.2s;
+  filter: grayscale(100%);
 }
 
-.my-rentals-page .rating-star .star-icon {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: var(--primary-color) !important;
-  -webkit-mask: var(--star-mask) no-repeat center / contain;
-  mask: var(--star-mask) no-repeat center / contain;
-  transition: all 0.2s ease;
-  filter: 
-    drop-shadow(2px 2px 3px rgba(163, 177, 198, 0.5)) 
-    drop-shadow(-2px -2px 3px rgba(255, 255, 255, 0.8));
-  opacity: 0.4;
+.star-rating .star.active {
+  filter: grayscale(0%);
 }
 
-.my-rentals-page .rating-star:active {
-  transform: scale(0.95);
-}
-
-.my-rentals-page .rating-star.active .star-icon {
-  background: linear-gradient(145deg, #4fc3f7, #0288d1) !important;
-  opacity: 1;
-  filter: 
-    drop-shadow(4px 4px 8px rgba(163, 177, 198, 0.6)) 
-    drop-shadow(-4px -4px 8px rgba(255, 255, 255, 0.9));
-}
-
-.my-rentals-page .rating-star:hover {
-  transform: translateY(-2px);
+.star-rating .star:hover {
+  transform: scale(1.2);
 }
 
 .rating-text {
@@ -268,64 +187,6 @@
   font-weight: 600;
   color: var(--primary-color);
   margin-top: 10px;
-}
-
-.my-rentals-page .modal-content .form-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 20px;
-}
-
-.my-rentals-page .modal-content .form-group label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--dark-color);
-  font-size: 0.95rem;
-}
-
-.my-rentals-page .modal-content .form-group textarea {
-  padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: var(--bg-color);
-  border-radius: 12px;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  box-shadow: var(--box-shadow-inset);
-  color: var(--dark-color);
-  resize: vertical;
-}
-
-.my-rentals-page .modal-content .form-group textarea:focus {
-  outline: none;
-  box-shadow: var(--box-shadow-pressed);
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.modal-actions .btn {
-  flex: 1;
-}
-
-.my-rentals-page .modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(3px);
-}
-
-.my-rentals-page .modal-content {
-  background: var(--bg-color);
-  border-radius: var(--border-radius);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  padding: 30px;
-  position: relative;
-}
-
-.my-rentals-page .modal-content::after {
-  display: none;
 }
 
 @media (max-width: 768px) {
@@ -341,4 +202,3 @@
     font-size: 28px;
   }
 }
-

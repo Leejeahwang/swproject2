@@ -3,54 +3,9 @@
   top: 0;
   left: 0;
   right: 0;
-  background: transparent;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  overflow: visible;
-}
-
-.navbar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  /* 1. 노이즈 텍스처 추가 (Data URI) */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"),
-    linear-gradient(135deg, rgba(233, 240, 248, 0.3), rgba(233, 240, 248, 0.15));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  
-  /* 2. 엣지 라이팅 강화 (두께감 표현) */
-  box-shadow: 
-    0 8px 32px 0 rgba(192, 209, 225, 0.3),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.8),      /* 상단 하이라이트 (강함) */
-    inset 1px 0 0 0 rgba(255, 255, 255, 0.5),      /* 좌측 하이라이트 */
-    inset -1px 0 0 0 rgba(255, 255, 255, 0.5),     /* 우측 하이라이트 */
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2);     /* 하단 은은한 반사 */
-    
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  z-index: -3;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.navbar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(255, 255, 255, 0.5) 20%,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(255, 255, 255, 0.5) 80%,
-    transparent 100%
-  );
-  pointer-events: none;
 }
 
 .navbar-container {
@@ -61,38 +16,31 @@
   justify-content: space-between;
   align-items: center;
   height: 60px;
-  position: relative;
-  z-index: 1;
-  isolation: isolate;
 }
 
 .navbar-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: bold;
   color: var(--primary-color);
   text-decoration: none;
-  text-transform: uppercase;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+/* 로고 이미지 크기 - 옛날 버전 텍스트 크기(24px)를 고려하여 더 크게 */
 .logo-image {
-  height: 105px;
+  height: 100px;
   width: auto;
-  transition: transform 0.3s ease;
-}
-
-.navbar-logo:hover .logo-image {
-  transform: scale(1.05);
+  max-height: 100px;
 }
 
 .navbar-menu {
   display: flex;
   align-items: center;
   gap: 20px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .navbar-link {
@@ -100,67 +48,56 @@
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  white-space: nowrap;
+  /* 옛날 버전처럼 font-size 제거하여 기본 크기(16px) 사용 */
 }
 
 .navbar-link:hover {
   color: var(--primary-color);
 }
 
-.navbar-admin {
-  color: #667eea;
-  font-weight: 600;
-}
-
-.navbar-admin:hover {
-  color: #764ba2;
-}
-
 .navbar-btn {
-  padding: 0;
-  background: transparent;
-  color: var(--primary-color);
-  border: none;
-  font-weight: 600;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  font-weight: 500;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
   text-decoration: none;
-  font-size: 1rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  white-space: nowrap;
+  /* 옛날 버전처럼 font-size 제거하여 기본 크기(16px) 사용 */
 }
 
 .navbar-btn:hover {
-  color: var(--secondary-color);
+  background-color: white;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
 .navbar-notification {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: transparent;
-  border: none;
+  cursor: pointer;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .navbar-notification:hover {
-  opacity: 0.8;
+  transform: scale(1.1);
 }
 
 .notification-icon {
-  width: 22px;
-  height: 22px;
-  fill: #8ea9c1;
-  transition: fill 0.2s ease;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  font-size: 24px;
+  transition: transform 0.3s ease;
 }
 
 .navbar-notification:hover .notification-icon {
-  fill: #4f90c9;
+  animation: ring 0.5s ease-in-out;
 }
 
 @keyframes ring {
@@ -171,21 +108,20 @@
 
 .notification-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  background: linear-gradient(145deg, #ff6b6b, #ff8787);
-  color: #fff;
+  top: -5px;
+  right: -8px;
+  background-color: #dc3545;
+  color: white;
   border-radius: 50%;
-  min-width: 18px;
-  height: 18px;
+  min-width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: bold;
   padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: none; /* 그림자 제거 - 어두운 배경에서 하얀 그림자 문제 해결 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
@@ -197,10 +133,18 @@
   .navbar-logo {
     font-size: 20px;
   }
+
+  .logo-image {
+    height: 70px;
+    max-height: 70px;
+  }
   
   .navbar-btn {
     padding: 6px 12px;
     font-size: 14px;
   }
-}
 
+  .navbar-link {
+    font-size: 14px;
+  }
+}

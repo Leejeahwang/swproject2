@@ -15,12 +15,11 @@
 }
 
 .empty-state {
-  background: var(--bg-color);
+  background: white;
   border-radius: var(--border-radius);
   padding: 60px 20px;
   text-align: center;
   box-shadow: var(--box-shadow);
-  border: 1px solid rgba(192, 209, 225, 0.15);
 }
 
 .empty-state p {
@@ -40,4 +39,3 @@
     width: 100%;
   }
 }
-

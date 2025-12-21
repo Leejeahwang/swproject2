@@ -4,19 +4,17 @@
 }
 
 .product-card {
-  background: var(--bg-color);
+  background: white;
   border-radius: var(--border-radius);
   overflow: hidden;
   box-shadow: var(--box-shadow);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   position: relative;
-  border: 1px solid rgba(192, 209, 225, 0.15);
-  isolation: isolate;
 }
 
 .product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--box-shadow-hover);
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 /* 대여중인 제품에 약간의 오버레이 효과 */
@@ -61,32 +59,8 @@
   background-color: var(--danger-color);
 }
 
-.status-badge.overdue {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  animation: pulse-overdue 2s infinite;
-}
-
-@keyframes pulse-overdue {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
-  }
-}
-
-/* 지연된 제품 카드 스타일 */
-.product-card.overdue {
-  border: 2px solid rgba(220, 53, 69, 0.3);
-}
-
-.product-card.overdue .product-image {
-  opacity: 0.75;
-}
-
 .product-info {
   padding: 15px;
-  background: var(--bg-color);
 }
 
 .product-title {
@@ -117,7 +91,7 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 10px;
-  border-top: 1px solid rgba(192, 209, 225, 0.15);
+  border-top: 1px solid #eee;
 }
 
 .owner-name {
@@ -130,17 +104,3 @@
   font-weight: 600;
   color: var(--primary-color);
 }
-
-.owner-rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.9rem;
-  color: #7289a7;
-}
-
-.owner-rating .soft-star-mini {
-  width: 18px;
-  height: 18px;
-}
-

@@ -386,7 +386,7 @@ const MyRentals = () => {
                       <>
                         {rental.owner.username}
                         <span className="soft-star-badge">
-                          <span className="soft-star-icon"></span> {(rental.owner.averageRating || 0).toFixed(1)}
+                          ⭐ {(rental.owner.averageRating || 0).toFixed(1)}
                         </span>
                       </>
                     )
@@ -396,7 +396,7 @@ const MyRentals = () => {
                       <>
                         {rental.borrower.username}
                         <span className="soft-star-badge">
-                          <span className="soft-star-icon"></span> {(rental.borrower.averageRating || 0).toFixed(1)}
+                          ⭐ {(rental.borrower.averageRating || 0).toFixed(1)}
                         </span>
                       </>
                     )
@@ -475,7 +475,7 @@ const MyRentals = () => {
                     onClick={() => handleOpenReviewModal(rental, true, 'product')}
                     className="btn btn-primary"
                   >
-                    <span className="soft-star-mini"></span> 리뷰 작성
+                    ⭐ 리뷰 작성
                   </button>
                 ) : (
                   <span style={{ 
@@ -498,7 +498,7 @@ const MyRentals = () => {
                     onClick={() => handleOpenReviewModal(rental, false, 'user')}
                     className="btn btn-primary"
                   >
-                    <span className="soft-star-mini"></span> 리뷰 작성
+                    ⭐ 리뷰 작성
                   </button>
                 ) : (
                   <span style={{ 
@@ -872,7 +872,7 @@ const MyRentals = () => {
       {showReviewModal && selectedRental && (
         <div className="modal-overlay" onClick={() => setShowReviewModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2><span className="soft-star-icon"></span> 리뷰 작성</h2>
+            <h2>⭐ 리뷰 작성</h2>
             
             <div className="review-target">
               {reviewType === 'product' ? (
@@ -907,7 +907,7 @@ const MyRentals = () => {
                       onClick={() => setReviewData({ ...reviewData, rating: star })}
                       aria-label={`${star}점`}
                     >
-                      <span className="star-icon"></span>
+                      ⭐
                     </span>
                   ))}
                 </div>

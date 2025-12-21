@@ -100,8 +100,8 @@ const ProductDetail = () => {
     return (
       <div className="stars">
         {[1, 2, 3, 4, 5].map(star => (
-          <span key={star} className={`star ${star <= rating ? 'filled' : ''}`}>
-            <span className="soft-star-mini"></span>
+          <span key={star} className={star <= rating ? 'star filled' : 'star'}>
+            ⭐
           </span>
         ))}
       </div>
@@ -406,7 +406,7 @@ const ProductDetail = () => {
               <Link to={`/profile/${product.owner._id || product.owner.id}`} className="owner-card">
                 <div className="owner-details">
                   <h4>{product.owner.username}</h4>
-                  <p><span className="soft-star-mini"></span> 평점: {(product.owner.averageRating || 0).toFixed(1)}</p>
+                  <p>⭐ 평점: {(product.owner.averageRating || 0).toFixed(1)}</p>
                   <p>대여 {product.owner.rentalCount || 0}회</p>
                 </div>
               </Link>
@@ -513,7 +513,7 @@ const ProductDetail = () => {
                       {review.reviewer.username}
                     </Link>
                     <span className="reviewer-rating">
-                      <span className="soft-star-mini"></span> {(review.reviewer.averageRating || 0).toFixed(1)}
+                      ⭐ {(review.reviewer.averageRating || 0).toFixed(1)}
                     </span>
                   </div>
                   <div className="review-rating-date">

@@ -504,7 +504,7 @@ const Profile = () => {
               <div className="stat-item">
                 <span className="stat-label">전체 평점</span>
                 <span className="stat-value rating-value">
-                  <span className="soft-star-icon"></span> {(user.averageRating || 0).toFixed(1)}
+                  ⭐ {(user.averageRating || 0).toFixed(1)}
                 </span>
               </div>
               <div className="stat-item">
@@ -592,8 +592,8 @@ const Profile = () => {
                   <h3>🏠 빌려준 사람으로서 받은 리뷰</h3>
                   {ownerReviews.length > 0 && (
                     <div className="section-rating">
-                      <span className="avg-rating soft-star-badge">
-                        <span className="soft-star-mini"></span> {ownerAvgRating.toFixed(1)}
+                      <span className="avg-rating">
+                        ⭐ {ownerAvgRating.toFixed(1)}
                       </span>
                       <span className="review-count">({ownerReviews.length}개)</span>
                     </div>
@@ -608,8 +608,8 @@ const Profile = () => {
                         <div className="review-header">
                           <div className="reviewer-info">
                             <strong>{review.reviewer.username}</strong>
-                            <span className="review-rating soft-star-badge">
-                              <span className="soft-star-mini"></span> {review.rating.toFixed(1)}
+                            <span className="review-rating">
+                              {'⭐'.repeat(Math.round(review.rating))} {review.rating.toFixed(1)}
                             </span>
                           </div>
                           <span className="review-date">
@@ -635,8 +635,8 @@ const Profile = () => {
                   <h3>📦 빌린 사람으로서 받은 리뷰</h3>
                   {borrowerReviews.length > 0 && (
                     <div className="section-rating">
-                      <span className="avg-rating soft-star-badge">
-                        <span className="soft-star-mini"></span> {borrowerAvgRating.toFixed(1)}
+                      <span className="avg-rating">
+                        ⭐ {borrowerAvgRating.toFixed(1)}
                       </span>
                       <span className="review-count">({borrowerReviews.length}개)</span>
                     </div>
@@ -651,8 +651,8 @@ const Profile = () => {
                         <div className="review-header">
                           <div className="reviewer-info">
                             <strong>{review.reviewer.username}</strong>
-                            <span className="review-rating soft-star-badge">
-                              <span className="soft-star-mini"></span> {review.rating.toFixed(1)}
+                            <span className="review-rating">
+                              {'⭐'.repeat(Math.round(review.rating))} {review.rating.toFixed(1)}
                             </span>
                           </div>
                           <span className="review-date">
